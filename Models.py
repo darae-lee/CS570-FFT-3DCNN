@@ -49,23 +49,40 @@ class Original_Model(nn.Module):
     3D-CNN model designed by the '3D-CNN for HAR' paper. 
     Input Shape: (N, C_in=1, Dimension=5f-2, Height=h, Width=w)
     """
-    def __init__(self, verbose=False, input_dim=7):
-        """You need to give the dimension (*, *, Dim, *, *) as a parameter."""
+    def __init__(self, verbose=False, mode='KTH'):
+        """You need to give the dimension (*, *, f, h, w) as a parameter."""
         super(Original_Model, self).__init__()
         self.verbose = verbose
-        self.f = input_dim
+        self.mode = mode
+        if self.mode == 'KTH':
+            self.f = 9
+        elif self.mode == 'TRECVID':
+            self.f = 7
+        else:
+            print("This mode is not available. Choose one of KTH or TRECVID.")
+            return 
         self.dim = self.f * 5 - 2
         self.dim1, self.dim2 = (self.dim-10)*2, (self.dim-20)*6
-        print(self.dim, self.dim1, self.dim2)
+
+        if self.mode == 'KTH':
+            self.conv1 = nn.Conv3d(in_channels=1, out_channels=2, kernel_size=(3,9,7), stride=1)
+            self.conv2 = nn.Conv3d(in_channels=2, out_channels=6, kernel_size=(3,7,7), stride=1)
+            self.pool1 = nn.MaxPool2d(3)
+            self.fc1 = nn.Linear(self.dim1, 3, bias=False)
+            self.pool2 = nn.MaxPool2d(3)
+            self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=128, kernel_size=(6,4), stride=1)
+            self.fc1 = nn.Linear(128, 3, bias=False)
+
+        elif self.mode == 'TRECVID':
+            self.conv1 = nn.Conv3d(in_channels=1, out_channels=2, kernel_size=(3,7,7), stride=1)
+            self.conv2 = nn.Conv3d(in_channels=2, out_channels=6, kernel_size=(3,7,6), stride=1)
+            self.pool1 = nn.MaxPool2d(2)
+            self.fc1 = nn.Linear(self.dim1, 3, bias=False)
+            self.pool2 = nn.MaxPool2d(3)
+            self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=128, kernel_size=(7,4), stride=1)
+            self.fc1 = nn.Linear(128, 3, bias=False)
         
-        self.conv1 = nn.Conv3d(in_channels=1, out_channels=2, kernel_size=(3,7,7), stride=1)
-        self.conv2 = nn.Conv3d(in_channels=2, out_channels=6, kernel_size=(3,7,6), stride=1)
-        self.pool1 = nn.MaxPool2d(2)
-        self.fc1 = nn.Linear(self.dim1, 3, bias=False)
-        self.pool2 = nn.MaxPool2d(3)
-        self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=128, kernel_size=(7,4), stride=1)
-        self.fc1 = nn.Linear(128, 3, bias=False)
-    
+
     def forward(self, x):
         if self.verbose: print("연산 전:\t", x.size())
         assert x.size()[1] == 1

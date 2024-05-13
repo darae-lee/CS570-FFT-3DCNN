@@ -14,8 +14,15 @@ def main():
     Download(filename=filename)
     
     # Extract the input frames from the raw video data
-    # N, f, h, w = (10, 7, 60, 40) # TRECVID shape
-    N, f, h, w = (10, 9, 80, 60) # KTH shape
+    mode = 'KTH' # or 'TRECVID'
+    if mode == 'KTH':
+        N, f, h, w = (10, 9, 80, 60) # KTH shape
+    elif mode == 'TRECVID':
+        N, f, h, w = (10, 7, 60, 40) # TRECVID shape
+    else : 
+        print("Other mode is not available.")
+        return 
+    
     input_frames = np.zeros((N, f, h, w, 3), dtype='float32') 
     cap = cv2.VideoCapture(filename)
     for i in range(N):
@@ -25,7 +32,7 @@ def main():
     
     # Hardwired layer
     inputs = hardwire_layer(input_frames).to(device)  
-    cnn = Original_Model(verbose=True, input_dim=f).to(device)
+    cnn = Original_Model(verbose=True, mode=mode).to(device)
     summary(cnn, (1,5*f-2,h,w))  # Input Size: (N, C_in=1, Dimension=5*f-2, Height=h, Width=w)
 
 

@@ -68,19 +68,17 @@ class Original_Model(nn.Module):
             self.conv1 = nn.Conv3d(in_channels=1, out_channels=2, kernel_size=(3,9,7), stride=1)
             self.conv2 = nn.Conv3d(in_channels=2, out_channels=6, kernel_size=(3,7,7), stride=1)
             self.pool1 = nn.MaxPool2d(3)
-            self.fc1 = nn.Linear(self.dim1, 3, bias=False)
             self.pool2 = nn.MaxPool2d(3)
             self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=128, kernel_size=(6,4), stride=1)
-            self.fc1 = nn.Linear(128, 3, bias=False)
+            self.fc1 = nn.Linear(self.dim1, 6, bias=False)
 
         elif self.mode == 'TRECVID':
             self.conv1 = nn.Conv3d(in_channels=1, out_channels=2, kernel_size=(3,7,7), stride=1)
             self.conv2 = nn.Conv3d(in_channels=2, out_channels=6, kernel_size=(3,7,6), stride=1)
             self.pool1 = nn.MaxPool2d(2)
-            self.fc1 = nn.Linear(self.dim1, 3, bias=False)
             self.pool2 = nn.MaxPool2d(3)
             self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=128, kernel_size=(7,4), stride=1)
-            self.fc1 = nn.Linear(128, 3, bias=False)
+            self.fc1 = nn.Linear(self.dim1, 3, bias=False)
         
 
     def forward(self, x):

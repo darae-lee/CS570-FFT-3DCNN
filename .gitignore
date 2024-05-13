@@ -1,6 +1,6 @@
 example_video/*
 
-3d_cnn.ipynb
+./3d_cnn.ipynb
 
 __pycache__/*
 

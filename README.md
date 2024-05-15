@@ -6,7 +6,7 @@
 
 ```
 cd datasets
-python KTH.py
+python kth_download.py
 cd ..
 ```
 

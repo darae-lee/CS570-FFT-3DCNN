@@ -9,14 +9,16 @@ import wandb
 
 
 def main(args): 
-    print(args.lr, args.num_epochs)
+    print("learning rate: ", args.lr, "\tnum epochs: ", args.num_epochs, "\n")
 
-    device = torch.device('cuda:1' if torch.cuda.is_available() and not args.cpu_only else 'cpu')
-    print(f'{device} is available')
+    if args.gpu == -1:
+        print('disable cuda. ')
+        device = torch.device('cpu')
+    else:
+        device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
+    print(f'{device} is available. \n')
 
-    wandb_table = wandb.Table(columns=["repeat", "loss"])
-
-    print("Loading dataset")
+    wandb_table = wandb.Table(columns=["repeat", "loss", "acc"])
     
     torchvision_transform = transforms.Compose([
         transforms.Resize((args.height, args.width)),
@@ -54,20 +56,20 @@ def main(args):
         with torch.no_grad(): 
             loss, acc = test(test_loader, model, criterion, device)     
             test_loss.append(loss)
-            test_acc.append(loss)
+            test_acc.append(acc)
             
             print('{}-th Test set: Loss = {:.7f}, Acc = {:.4f}\n'.format(i, loss, acc)) 
             # log metrics to wandb
             # loss_log, acc_log = str(i)+"test loss", str(i)+"test acc."
             wandb.log({"test loss": loss, "test acc.": acc}, step=i)#correct / len(test_loader.dataset)})
-            wandb_table.add_data(str(i), loss)
+            wandb_table.add_data(str(i), loss, acc)
     
     # average the test results
     avg_loss, avg_acc = np.mean(np.array(test_loss)), np.mean(np.array(test_acc))
     wandb.log({"avg test loss": avg_loss, "avg test acc.": avg_acc})
     wandb_table.add_data("avg", loss)
-    wandb.log({"Test Loss": wandb.plot.bar( wandb_table, 
-                                           label="repeat", value="loss", title="Test Loss Bar Chart")})
+    wandb.log({"Test Acc": wandb.plot.bar( wandb_table, 
+                                           label="repeat", value="acc", title="Test Acc Bar Chart")})
     
     print('\nFinal Test Result: \nLoss = {:.7f}, Acc = {:.4f} ({:2.1f}%)\n'.format(avg_loss, avg_acc, avg_acc*100.))
 
@@ -131,8 +133,8 @@ if __name__ == "__main__":
                         help="optimizer for training (choose one of 'adam' or 'sgd')")
     # parser.add_argument("--log", type=int, default=10,
     #                     help="log frequency (default: 10 iterations)")
-    parser.add_argument("--cpu_only", action='store_true',
-                        help="add the argument to use only cpu, not cuda")
+    parser.add_argument("--gpu", type=int, default=0,
+                        help="set gpu rank to run cuda (set -1 to use cpu only)")
     parser.add_argument("--width", type=int, default = 60)
     parser.add_argument("--height", type=int, default = 80)
     parser.add_argument("--frame", type=int, default = 9,
@@ -151,6 +153,6 @@ if __name__ == "__main__":
         "learning_rate": args.lr,
         }
     )
-    wandb.run.name = f'lr-{args.lr}-NE-{args.num_epochs}'
+    wandb.run.name = f'lr-{args.lr}-NE-{args.num_epochs}-nofinalrelu'
     main(args)
     wandb.finish()

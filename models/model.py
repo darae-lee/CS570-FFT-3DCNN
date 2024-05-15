@@ -120,7 +120,7 @@ class Original_Model(nn.Module):
         if self.verbose: print("conv3 연산 후:\t", x.shape)
 
         x = x.view(-1, 128)
-        x = F.relu(self.fc1(x))
+        x = self.fc1(x)
         if self.verbose: print("fc1 연산 후:\t", x.shape)
 
         return x

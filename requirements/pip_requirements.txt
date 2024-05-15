@@ -1,0 +1,42 @@
+Brotli @ file:///croot/brotli-split_1714483155106/work
+cachetools==5.3.3
+certifi @ file:///croot/certifi_1707229174982/work/certifi
+charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
+click==8.1.7
+docker-pycreds==0.4.0
+filelock @ file:///croot/filelock_1700591183607/work
+gitdb==4.0.11
+GitPython==3.1.43
+gmpy2 @ file:///work/ci_py311/gmpy2_1676839849213/work
+idna @ file:///croot/idna_1714398848350/work
+Jinja2 @ file:///croot/jinja2_1706733616596/work
+MarkupSafe @ file:///croot/markupsafe_1704205993651/work
+mkl-fft @ file:///croot/mkl_fft_1695058164594/work
+mkl-random @ file:///croot/mkl_random_1695059800811/work
+mkl-service==2.4.0
+mpmath @ file:///croot/mpmath_1690848262763/work
+networkx @ file:///croot/networkx_1690561992265/work
+numpy @ file:///croot/numpy_and_numpy_base_1708638617955/work/dist/numpy-1.26.4-cp311-cp311-linux_x86_64.whl#sha256=5f96f274d410a1682519282ae769c877d32fdbf171aa8badec7bf5e1d3a1748a
+nvidia-ml-py==12.535.161
+nvitop==1.3.2
+opencv-python==4.9.0.80
+pillow @ file:///croot/pillow_1714398848491/work
+platformdirs==4.2.2
+protobuf==4.25.3
+psutil==5.9.8
+PySocks @ file:///work/ci_py311/pysocks_1676822712504/work
+PyYAML==6.0.1
+requests @ file:///croot/requests_1707355572290/work
+sentry-sdk==2.1.1
+setproctitle==1.3.3
+six==1.16.0
+smmap==5.0.1
+sympy @ file:///croot/sympy_1701397643339/work
+termcolor==2.4.0
+torch==2.0.1
+torchvision==0.15.2
+tqdm==4.66.4
+triton==2.0.0
+typing_extensions @ file:///croot/typing_extensions_1715268824938/work
+urllib3 @ file:///croot/urllib3_1707770551213/work
+wandb==0.17.0

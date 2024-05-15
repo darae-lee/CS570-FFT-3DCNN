@@ -1,11 +1,8 @@
-example_video/*
+*.avi
+*.p
 
-3d_cnn.ipynb
-
-__pycache__/*
-
-CS570
-CS570/*
-
-requirements
-requirements/*
+*/__pycache__
+*/kth-human-motion
+wandb
+*/data
+*/kth-data

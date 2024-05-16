@@ -3,6 +3,7 @@
 
 */__pycache__
 */kth-human-motion
+!datasets/kth-human-motion/00sequences.txt
 wandb
 */data
 */kth-data

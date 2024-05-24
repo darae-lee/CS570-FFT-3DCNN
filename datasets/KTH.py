@@ -4,7 +4,12 @@ import pickle
 import re
 from torchvision import transforms, io
 import torch
-from models.model import hardwire_layer
+import sys
+
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(root_dir, 'models'))
+
+from model import hardwire_layer
 
 
 CATEGORIES = [

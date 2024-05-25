@@ -24,6 +24,7 @@ pillow @ file:///croot/pillow_1714398848491/work
 platformdirs==4.2.2
 protobuf==4.25.3
 psutil==5.9.8
+pyav==12.0.5
 PySocks @ file:///work/ci_py311/pysocks_1676822712504/work
 PyYAML==6.0.1
 requests @ file:///croot/requests_1707355572290/work

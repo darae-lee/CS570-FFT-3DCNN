@@ -37,7 +37,7 @@ def main(args):
 
         model = Original_Model(mode='KTH').to(device)
         if args.optim == 'sgd':
-            optimizer = optim.SGD(model.parameters(), lr=args.lr)
+            optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
         elif args.optim == 'adam':
             optimizer = optim.Adam(model.parameters(), lr=args.lr)
         criterion = torch.nn.CrossEntropyLoss()
@@ -129,6 +129,10 @@ if __name__ == "__main__":
     #                     help="start index of epoch (default: 1)")
     parser.add_argument("--lr", type=float, default=1e-5,
                         help="learning rate for training (default: 1e-5)")
+    parser.add_argument("--weight_decay", type=float, default=1e-4,
+                        help="weight decay for training with SGD optimizer (default: 1e-4)")
+    parser.add_argument("--momentum", type=float, default=0.9,
+                        help="weight decay for training with SGD optimizer (default: 0.9)")
     parser.add_argument("--optim", type=str, default="adam",
                         help="optimizer for training (choose one of 'adam' or 'sgd')")
     # parser.add_argument("--log", type=int, default=10,
@@ -153,6 +157,6 @@ if __name__ == "__main__":
         "learning_rate": args.lr,
         }
     )
-    wandb.run.name = f'lr-{args.lr}-NE-{args.num_epochs}-nofinalrelu'
+    wandb.run.name = f'{args.optim}-lr-{args.lr}-NE-{args.num_epochs}'
     main(args)
     wandb.finish()

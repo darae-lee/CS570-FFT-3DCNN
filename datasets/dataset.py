@@ -39,27 +39,30 @@ class KTHDataset(Dataset):
             self.subjects = list(set(range(self.num_subjects)) - set(self.subjects)) # list of the remaining 9 test subjects
         print(self.type, "dataset subjects:", self.subjects)
         
-        self.dataset, self.labels = self.read_dataset() 
+        self.dataset, self.auxdata, self.labels = self.read_dataset() 
         
         
     def __len__(self):
         return self.dataset.shape[0]
 
     def __getitem__(self, idx):
-        return self.dataset[idx], self.labels[idx]
+        return (self.dataset[idx], self.auxdata[idx]), self.labels[idx]
 
 
     def read_dataset(self):
         inputs = [] # Tensor shape: (N,f,c,h,w)
         labels = []
+        aux_inputs = [] # Tensor shape: (N,30)
         
         for subject_id in tqdm(self.subjects, desc="reading data"):
             filepath = os.path.join(self.directory, str(subject_id)+".p")
             subject = pickle.load(open(filepath, "rb"))
             inputs += subject["input"]
             labels += subject["category"]
+            aux_inputs += subject["aux"]
             
         inputs = torch.stack(inputs, dim=0)
         labels = torch.LongTensor([CATEGORY_INDEX[l] for l in labels])
+        aux_inputs = torch.stack(aux_inputs, dim=0)
     
-        return inputs, labels
+        return inputs, aux_inputs, labels

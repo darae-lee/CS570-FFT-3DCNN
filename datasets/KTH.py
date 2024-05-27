@@ -5,11 +5,12 @@ import re
 from torchvision import transforms, io
 import torch
 import sys
+import fire
 
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(root_dir, 'models'))
 
-from model import hardwire_layer
+from model import hardwire_layer, auxiliary_feature
 
 
 CATEGORIES = [
@@ -43,7 +44,7 @@ def make_raw_dataset(directory="kth-data", transform=None, f=9, device=None):
         os.mkdir(dir_path)
 
     print("Processing ...")
-    filenames = [[] for _ in range(subjects)] # , [[] for _ in range(subjects)]
+    filenames = [[] for _ in range(subjects)] 
     for category in CATEGORIES:
         # Get all files in current category's folder.
         folder_path = os.path.join(raw_path, category)
@@ -52,7 +53,7 @@ def make_raw_dataset(directory="kth-data", transform=None, f=9, device=None):
         for (file,s) in zip(cat_files, subject_ids):
             filenames[s].append(file) 
             
-    for subject_id in range(subjects):
+    for subject_id in range(11, subjects):
         categories = []
         input = []
         
@@ -80,6 +81,8 @@ def make_raw_dataset(directory="kth-data", transform=None, f=9, device=None):
             
         # hardwiring layer
         input = hardwire_layer(input, device, verbose=True).cpu() # Tensor shape : (N, f, h, w) -> (N, 1, 5f-2, h, w)
+        gray_img = input[:,:,:f, :, :]
+        input_aux = auxiliary_feature(gray_img)
 
         # save the data per each subject
         person_path = os.path.join(dir_path, str(subject_id))
@@ -87,7 +90,8 @@ def make_raw_dataset(directory="kth-data", transform=None, f=9, device=None):
         data = {
             "category": categories,
             "input": input, # Tensor shape : (N, 1, 5f-2, h, w)
-            "subject": subject_id
+            "subject": subject_id,
+            "aux": input_aux, # Tensor shape : (N, 30)
         }
         pickle.dump(data, open("%s.p" % person_path, "wb"))
         
@@ -139,4 +143,4 @@ def parse_sequence_file():
 if __name__ == "__main__":
     #TODO : add kth_download
     print("Making dataset")
-    make_raw_dataset()
+    fire.Fire(make_raw_dataset())

@@ -81,11 +81,12 @@ def train(train_loader, model, optimizer, criterion, device):
     """
     train_loss = 0
     train_acc = 0 # best acc
-    for data, target in train_loader:
+    for (data, aux_data), target in train_loader:
         data = data.to(device)
+        aux_data = aux_data.to(device)
         target = target.to(device)
         optimizer.zero_grad()  # 기울기 초기화
-        output = model(data) # forward        # probability = softmax(logit)
+        output = model(data, aux_data) # forward        # probability = softmax(logit)
         loss = criterion(output, target) 
         loss.backward()  # 역전파
         optimizer.step()
@@ -127,8 +128,8 @@ if __name__ == "__main__":
                         help="number of epochs to train (default: 30)")
     # parser.add_argument("--start_epoch", type=int, default=1,
     #                     help="start index of epoch (default: 1)")
-    parser.add_argument("--lr", type=float, default=1e-5,
-                        help="learning rate for training (default: 1e-5)")
+    parser.add_argument("--lr", type=float, default=0.0005,
+                        help="learning rate for training (default: 0.0005)")
     parser.add_argument("--weight_decay", type=float, default=1e-4,
                         help="weight decay for training with SGD optimizer (default: 1e-4)")
     parser.add_argument("--momentum", type=float, default=0.9,
@@ -157,6 +158,6 @@ if __name__ == "__main__":
         "learning_rate": args.lr,
         }
     )
-    wandb.run.name = f'{args.optim}-lr-{args.lr}-NE-{args.num_epochs}'
+    wandb.run.name = f'{args.optim}-lr-{args.lr}-NE-{args.num_epochs}-aux'
     main(args)
     wandb.finish()

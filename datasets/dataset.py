@@ -22,7 +22,7 @@ class KTHDataset(Dataset):
     if random=True : randomly select 16 subjects for train dataset, and put remaining 9 subjects for test dataset.
     * No valid dataset. (Following the paper's dataset preprocessing method.)
     """
-    def __init__(self, directory="kth-data", type="train", transform= None, frames = 9, seed=2, device=torch.device('cuda')) :
+    def __init__(self, directory="kth-data-aux", type="train", transform= None, frames = 9, seed=2, device=torch.device('cuda')) :
         self.directory = os.path.join(os.getcwd(), "datasets", directory)
         self.type = type
         self.device = device

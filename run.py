@@ -106,10 +106,12 @@ def test(test_loader, model, criterion, device):
     """
     test_loss = 0
     test_acc = 0 # best accuracy
-    for data, target in test_loader: 
+    for (data, aux_data), target in test_loader:
         data = data.to(device)
+        aux_data = aux_data.to(device)
         target = target.to(device)
-        output = model(data)
+        target = target.to(device)
+        output = model(data, aux_data)
         test_loss += criterion(output, target).item() # sum up batch loss
         pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
         test_acc += pred.eq(target.view_as(pred)).sum().item()
@@ -120,7 +122,7 @@ def test(test_loader, model, criterion, device):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Single Frame ConvNet")
-    parser.add_argument("--dataset_dir", type=str, default="kth-data",
+    parser.add_argument("--dataset_dir", type=str, default="kth-data-aux",
                         help="directory to dataset under 'datasets' folder")
     parser.add_argument("--batch_size", type=int, default=16,
                         help="batch size for training (default: 16)")

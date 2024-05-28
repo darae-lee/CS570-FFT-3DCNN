@@ -51,14 +51,16 @@ def hardwire_layer(input, device, verbose=False):
     return hardwired
 
 
-def compute_dense_sift(frames, sift=None, step_size=6, sizes=[7, 16]):
+def compute_dense_sift(inputs, sift=None, pbar=None):
     """
     Extract SIFT descriptors from every 6 pixels of consecutive frames. 
-    Input : frames (shape: [f, h, w])
-    Output : descriptors, keypoints (descriptors shape: [num_descriptors, 128] / keypoints shape: [num_descriptors, 2]). 
+    Input : inputs (shape: [N, f, h, w]) 
+    Output : descriptors, keypoints (descriptors shape: [N, num_descriptors, 128] / keypoints shape: [num_descriptors, 2]). 
         Each descriptor feature has 128 dimension and each keypoint has 2 dimension (x, y).
         The number of descriptors depends on the SIFT result, but guarantees to have more than 512. 
     """
+    N, f, h, w = inputs.shape
+    step_size, sizes= 6, [7, 16]
     min_desc, dimension = 512, 128
     if sift is None :
         sift = cv2.SIFT_create()
@@ -66,94 +68,100 @@ def compute_dense_sift(frames, sift=None, step_size=6, sizes=[7, 16]):
     all_descriptors_list = []
     all_keypoints_list = []
     for size in sizes:
-        keypoints = [[cv2.KeyPoint(x, y, size) for y in range(0, image.shape[0], step_size)
-                                                for x in range(0, image.shape[1], step_size)] for image in frames]
-        output = [sift.compute(image, keypoints[i]) for i, image in enumerate(frames)]
-        all_descriptors_list += [np.concatenate([[desc for desc in output[f][1]] for f in range(len(frames))])]
-        all_keypoints_list += [np.concatenate([[kp.pt for kp in output[f][0]] for f in range(len(frames))])]
+        keypoints = [[cv2.KeyPoint(x, y, size) for y in range(0, h, step_size) for x in range(0, w, step_size)] for _ in range(f)]
+        if pbar: pbar.update(1)
+        all_descriptors_list += [[[sift.compute(image, keypoints[i])[1] for i, image in enumerate(frames)] for frames in inputs]]
+        if pbar: pbar.update(10)
+        all_keypoints_list += [np.concatenate([[kp.pt for kp in keypoints[j]] for j in range(f)])]
+        if pbar: pbar.update(1)
+    descriptors, keypoints = np.reshape(all_descriptors_list, newshape=(N, -1, dimension)), np.concatenate(all_keypoints_list)
     
-    descriptors, keypoints = np.vstack(all_descriptors_list), np.vstack(all_keypoints_list)
-    
-    assert len(descriptors) == len(keypoints) and len(descriptors) >= min_desc
-    assert descriptors.shape[1] == dimension
+    assert descriptors.shape[1] == keypoints.shape[0] 
+    assert descriptors.shape[1] >= min_desc
+    assert descriptors.shape[2] == dimension and keypoints.shape[1] == 2
 
     return descriptors, keypoints
 
-def compute_mehi(frames):
+def compute_mehi(inputs):
     """
     Compute MEHI (Motion Edge History Image)
-    Input : frames (shape: [f, h, w])
-    Output : mehi (shape: [f-1, h, w])
+    Input : inputs (shape: [N, f, h, w])
+    Output : mehi (shape: [N, f-1, h, w])
     """
-    return [cv2.absdiff(frames[i], frames[i-1]) for i in range(1, len(frames))]
+    return np.abs(np.diff(inputs, axis=1))
 
 def softly_quantize_descriptors(descriptors, kmeans):
-    """Function to softly quantize descriptors using a codebook"""
-    distances = kmeans.transform(descriptors)
+    """
+    Function to softly quantize descriptors using a codebook
+    inputs : descriptors: (N, num_features, 128)
+    output : soft_assigments (N, num_features, 1)
+    """
+    N = len(descriptors)
+    distances = np.stack([kmeans.transform(descriptors[n, :]) for n in range(N)])
     soft_assignments = np.exp(-distances)
-    soft_assignments /= soft_assignments.sum(axis=1, keepdims=True)
+    soft_assignments /= soft_assignments.sum(axis=2, keepdims=True)
     return soft_assignments
 
-def construct_spm_features(descriptors, keypoints, image_shape, kmeans, pyramid_levels=[(2, 2), (3, 4)], num_clusters=512):
+def construct_spm_features(descriptors, keypoints, image_shape, kmeans, pbar=None):
     """
     Function to construct SPM features.
-    output : spm_features (numpy array of shape : (8192,))
+    inputs : descriptors: (N, num_features, 128),   keypoints: (num_features, 2)
+    output : spm_features (numpy array of shape : (N, 8192))
     """
+    N, _, _ = descriptors.shape
     h, w = image_shape
+    pyramid_levels = [(2, 2), (3, 4)]
     spm_features = []
     for level in pyramid_levels:
         num_cells_x, num_cells_y = level
         cell_h, cell_w = h // num_cells_y, w // num_cells_x
         for i in range(num_cells_y):
             for j in range(num_cells_x):
-                cell_descriptors = descriptors[(j * cell_w <= keypoints[:, 0]) & (keypoints[:, 0] < (j + 1) * cell_w) 
+                cell_descriptors = descriptors[:, (j * cell_w <= keypoints[:, 0]) & (keypoints[:, 0] < (j + 1) * cell_w) 
                                             & (i * cell_h <= keypoints[:, 1]) & (keypoints[:, 1] < (i + 1) * cell_h)]
-
-                if cell_descriptors.size != 0:
-                    soft_assignments = softly_quantize_descriptors(cell_descriptors, kmeans)
-                    spm_feature = soft_assignments.sum(axis=0)
-                    spm_features.append(spm_feature)
-                else:
-                    spm_features.append(np.zeros(num_clusters))
-    spm_features = np.concatenate(spm_features)
+                soft_assignments = softly_quantize_descriptors(cell_descriptors, kmeans)
+                spm_feature = soft_assignments.sum(axis=1)
+                spm_features += [spm_feature]
+                if pbar: pbar.update(1)
+    spm_features = np.concatenate(spm_features, axis=1)
     
-    assert len(spm_features) == 16*512  # 8192 == 16 x 512
+    assert spm_features.shape == (N, 16*512)  # 8192 == 16 x 512
     return spm_features
 
 
-def auxiliary_feature(gray, num_clusters=512): 
+def auxiliary_feature(gray, num_clusters=512, verbose=False): 
     """
     Extract the auxiliary features from the gray images (gray: shape [N, 1, f, h, w])
     Output shape : [N, 300] 
     """
     N, _, f, h, w = gray.shape
-    all_spm_features_gray = []
-    all_spm_features_mehi = []
     kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(np.random.rand(10000, 128)) # kmeans for gray image
     pca = PCA(n_components=150).fit(np.random.rand(1000, 8192))
     sift = cv2.SIFT_create()
+
+    gray = (np.squeeze(gray).cpu().numpy() * 255).astype(np.uint8) # numpy array of shape (N, f, h, w)
+    mehi = compute_mehi(gray)   # (N, f-1, h, w)
     
-    for i in tqdm(range(N), desc="auxiliary", bar_format='\t{desc:<12}:{percentage:3.0f}%|{bar:60}{r_bar}'):
-        frames = [(gray[i, 0, j].cpu().numpy() * 255).astype(np.uint8) for j in range(f)]
+    # compute SIFT from gray image, MEHI
+    pbar = tqdm(total=82, desc="Auxiliary") if verbose else None
+    dense_sift_descriptors_gray, keypoints_gray = compute_dense_sift(gray, sift=sift, pbar=pbar) # shape: (N, num_desc, 128), (num_desc, 2)
+    dense_sift_descriptors_mehi, keypoints_mehi = compute_dense_sift(mehi, sift=sift, pbar=pbar)   # shape: (N, num_desc, 128), (num_desc, 2)
 
-        # compute SIFT from gray image, MEHI
-        dense_sift_descriptors_gray, keypoints_gray = compute_dense_sift(frames, sift=sift) # shape: (num_desc, 128), (num_desc, 2)
-        mehi = compute_mehi(frames)
-        dense_sift_descriptors_mehi, keypoints_mehi = compute_dense_sift(mehi, sift=sift)   # shape: (num_desc, 128), (num_desc, 2)
-
-        # Construct SPM features from the SIFT descriptors
-        spm_features_gray = construct_spm_features(dense_sift_descriptors_gray, keypoints_gray, (h, w), kmeans, num_clusters=num_clusters) # shape: (16, 512)
-        spm_features_mehi = construct_spm_features(dense_sift_descriptors_mehi, keypoints_mehi, (h, w), kmeans, num_clusters=num_clusters)
-        all_spm_features_gray.append(spm_features_gray)
-        all_spm_features_mehi.append(spm_features_mehi)
+    # Construct SPM features from the SIFT descriptors
+    spm_features_gray = construct_spm_features(dense_sift_descriptors_gray, keypoints_gray, (h, w), kmeans, pbar=pbar) # shape: (N, 8192)
+    spm_features_mehi = construct_spm_features(dense_sift_descriptors_mehi, keypoints_mehi, (h, w), kmeans, pbar=pbar)
 
     # Concatenate gray and MEHI features, and apply PCA
-    spm_features_gray = np.vstack(all_spm_features_gray) if all_spm_features_gray else np.zeros((N, 8192)) # shape: (N, 8192)
-    spm_features_mehi = np.vstack(all_spm_features_mehi) if all_spm_features_mehi else np.zeros((N, 8192)) # shape: (N, 8192)
     spm_features_gray_pca = torch.tensor(pca.transform(spm_features_gray)) # shape: (N, 150)
+    pbar.update(1)
     spm_features_mehi_pca = torch.tensor(pca.transform(spm_features_mehi)) # shape: (N, 150)
-    auxiliary_tensor = torch.concat([spm_features_gray_pca, spm_features_mehi_pca], dim=1).type(torch.float32) # shape: (N, 300)
+    pbar.update(1)
 
+    auxiliary_tensor = torch.concat([spm_features_gray_pca, spm_features_mehi_pca], dim=1).type(torch.float32) # shape: (N, 300)
+    pbar.close()
+    
+    assert auxiliary_tensor.shape == (N, 300)
+    
     return auxiliary_tensor
 
 

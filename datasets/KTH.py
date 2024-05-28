@@ -93,7 +93,7 @@ def make_raw_dataset(directory="kth-data-aux", add_reg=True, transform=None, f=9
         input = hardwire_layer(input, device, verbose=True).cpu() # Tensor shape : (N, f, h, w) -> (N, 1, 5f-2, h, w)
         gray_img = input[:,:,:f, :, :]
         if add_reg:
-            input_aux = auxiliary_feature(gray_img)
+            input_aux = auxiliary_feature(gray_img, verbose=True)
 
         # save the data per each subject
         person_path = os.path.join(dir_path, str(subject_id))

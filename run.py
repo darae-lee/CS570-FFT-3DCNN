@@ -26,11 +26,20 @@ def main(args):
     ])
 
     test_loss, test_acc = [], [] # list of the test results for 5 repeats
-    for i in range(5):
+    total_iteration = 1
+    seed_candidate = [0]
+    for i in range(total_iteration):
         print("=> {}-th iteration".format(i))
+<<<<<<< HEAD
         seed = random.randint(0, 100)
         train_set = KTHDataset(args.dataset_dir, add_reg=args.add_reg, type="train", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
         test_set = KTHDataset(args.dataset_dir, add_reg=args.add_reg, type="test", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
+=======
+        seed = seed_candidate[i]
+
+        train_set = KTHDataset(args.dataset_dir, type="train", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
+        test_set = KTHDataset(args.dataset_dir, type="test", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
+>>>>>>> 4c77a018345d0d4807384bd32137a4e24dc7299e
 
         train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=args.batch_size, num_workers=4, shuffle=True, pin_memory=True) 
         test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=args.batch_size, shuffle=False, pin_memory=True)
@@ -39,16 +48,25 @@ def main(args):
         if args.optim == 'sgd':
             optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
         elif args.optim == 'adam':
-            optimizer = optim.Adam(model.parameters(), lr=args.lr)
+            optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        
         criterion = torch.nn.CrossEntropyLoss()
         
         best_acc = 0
+        best_epoch = 0
+        stop_count = 0
+        patience = 5
         for epoch in range(args.num_epochs):
             train_loss, train_acc = train(train_loader, model, optimizer, criterion, device)
-            best_acc = max(train_acc, best_acc)
             
-            print("Epoch {:3d} : Loss = {:7f}, Acc = {:4f}".format(epoch, train_loss, train_acc))
+            model.eval()  # Evaluate on the test set
+            with torch.no_grad():
+                test_epoch_loss, test_epoch_acc = test(test_loader, model, criterion, device)
+                
+            print("Epoch {:3d} : Train Loss = {:7f}, Train Acc = {:4f}, Test Loss = {:7f}, Test Acc = {:4f}".format(
+                epoch, train_loss, train_acc, test_epoch_loss, test_epoch_acc))
             # log metrics to wandb
+<<<<<<< HEAD
             wandb.log({"train loss": train_loss, "train acc.": train_acc, "best acc.": best_acc})
             
         model.eval()  # test case 학습 방지를 위해.
@@ -67,6 +85,35 @@ def main(args):
     avg_loss, avg_acc = np.mean(np.array(test_loss)), np.mean(np.array(test_acc))
     wandb.log({"avg test loss": avg_loss, "avg test acc.": avg_acc})
     wandb.log({"Test Acc": wandb.plot.bar( wandb_table, 
+=======
+            wandb.log({"train loss": train_loss, "train acc.": train_acc, 
+                       "test loss": test_epoch_loss, "test acc.": test_epoch_acc, "best acc.": best_acc})
+            
+            # Early stopping check
+            if test_epoch_acc > best_acc:
+                best_acc = test_epoch_acc
+                best_epoch = epoch
+                stop_count = 0
+            else:
+                stop_count += 1
+                
+            if stop_count >= patience:
+                print(f"Early stopping at epoch {epoch}")
+                break
+                        
+        test_loss.append(test_epoch_loss)
+        test_acc.append(test_epoch_acc)
+        
+        print('{}-th Test set: Loss = {:.7f}, Acc = {:.4f}\n'.format(i, test_epoch_loss, test_epoch_acc)) 
+        wandb.log({"test loss": test_epoch_loss, "test acc.": test_epoch_acc}, step=i)
+        wandb_table.add_data(str(i), test_epoch_loss, test_epoch_acc)
+    
+    # average the test results
+    avg_loss, avg_acc = np.mean(np.array(test_loss)), np.mean(np.array(test_acc))
+    wandb.log({"avg test loss": avg_loss, "avg test acc": avg_acc})
+    wandb_table.add_data("avg", avg_loss, avg_acc)
+    wandb.log({"Test Acc": wandb.plot.bar(wandb_table, 
+>>>>>>> 4c77a018345d0d4807384bd32137a4e24dc7299e
                                            label="repeat", value="acc", title="Test Acc Bar Chart")})
     
     print('\nFinal Test Result: \nLoss = {:.7f}, Acc = {:.4f} ({:2.1f}%)\n'.format(avg_loss, avg_acc, avg_acc*100.))
@@ -131,8 +178,8 @@ if __name__ == "__main__":
                         help="number of epochs to train (default: 30)")
     # parser.add_argument("--start_epoch", type=int, default=1,
     #                     help="start index of epoch (default: 1)")
-    parser.add_argument("--lr", type=float, default=0.0005,
-                        help="learning rate for training (default: 0.0005)")
+    parser.add_argument("--lr", type=float, default=0.001,
+                        help="learning rate for training (default: 0.001)")
     parser.add_argument("--weight_decay", type=float, default=1e-4,
                         help="weight decay for training with SGD optimizer (default: 1e-4)")
     parser.add_argument("--momentum", type=float, default=0.9,

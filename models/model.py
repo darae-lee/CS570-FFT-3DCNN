@@ -179,6 +179,9 @@ class Original_Model(nn.Module):
 
         self.dim = self.f * 5 - 2
         self.dim1, self.dim2 = (self.dim-10)*2, (self.dim-20)*6
+        self.last_dim, self.aux_dim = 128, 300
+
+        self.dropout = nn.Dropout(p=0.5)
 
         if self.mode == 'KTH':
             self.classes = 6
@@ -186,8 +189,8 @@ class Original_Model(nn.Module):
             self.conv2 = nn.Conv3d(in_channels=2, out_channels=6, kernel_size=(3,7,7), stride=1)
             self.pool1 = nn.MaxPool2d(3)
             self.pool2 = nn.MaxPool2d(3)
-            self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=128, kernel_size=(6,4), stride=1)
-            self.fc1 = nn.Linear(158 if self.add_reg else 128, self.classes, bias=False)
+            self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=self.last_dim, kernel_size=(6,4), stride=1)
+            self.fc1 = nn.Linear(self.last_dim + self.aux_dim if self.add_reg else self.last_dim, self.classes, bias=False)
 
         elif self.mode == 'TRECVID':
             self.classes = 3
@@ -195,8 +198,8 @@ class Original_Model(nn.Module):
             self.conv2 = nn.Conv3d(in_channels=2, out_channels=6, kernel_size=(3,7,6), stride=1)
             self.pool1 = nn.MaxPool2d(2)
             self.pool2 = nn.MaxPool2d(3)
-            self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=128, kernel_size=(7,4), stride=1)
-            self.fc1 = nn.Linear(158 if self.add_reg else 128, self.classes, bias=False)
+            self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=self.last_dim, kernel_size=(7,4), stride=1)
+            self.fc1 = nn.Linear(self.last_dim + self.aux_dim if self.add_reg else self.last_dim, self.classes, bias=False)
 
     def forward(self, x, aux):
         if self.verbose: print("연산 전:\t", x.size())
@@ -239,9 +242,9 @@ class Original_Model(nn.Module):
         if self.verbose: print("conv3 연산 후:\t", x.shape)
 
         if self.add_reg:
-            x = torch.cat((x.view(-1, 128),aux), dim=1)
+            x = torch.cat((x.view(-1, self.last_dim),aux), dim=1)
         else:
-            x = x.view(-1, 128)
+            x = x.view(-1, self.last_dim)
         x = self.fc1(x)# [:,:self.classes]
         if self.verbose: print("fc1 연산 후:\t", x.shape)
 

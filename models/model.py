@@ -150,6 +150,8 @@ class Original_Model(nn.Module):
         self.kmeans1 = KMeans(n_clusters=20, random_state=0) # kmeans for gray image
         self.kmeans2 = KMeans(n_clusters=10, random_state=0) # kmeans for gray image
 
+        self.dropout = nn.Dropout(p=0.5)
+
         if self.mode == 'KTH':
             self.classes = 6
             self.conv1 = nn.Conv3d(in_channels=1, out_channels=2, kernel_size=(3,9,7), stride=1)
@@ -203,6 +205,7 @@ class Original_Model(nn.Module):
         x = F.relu(self.conv3(x))
         if self.verbose: print("conv3 연산 후:\t", x.shape)
 
+        x = self.dropout(x) # dropout (opt)
         x = x.view(-1, 128)
         aux_added = torch.cat([x,aux], dim=1)
         x = self.fc1(aux_added)[:,:self.classes]

@@ -22,11 +22,12 @@ class KTHDataset(Dataset):
     if random=True : randomly select 16 subjects for train dataset, and put remaining 9 subjects for test dataset.
     * No valid dataset. (Following the paper's dataset preprocessing method.)
     """
-    def __init__(self, directory="kth-data-aux", type="train", transform= None, frames = 9, seed=2, device=torch.device('cuda')) :
+    def __init__(self, directory="kth-data-aux", add_reg=True, type="train", transform= None, frames = 9, seed=2, device=torch.device('cuda')) :
         self.directory = os.path.join(os.getcwd(), "datasets", directory)
         self.type = type
         self.device = device
         self.num_subjects = 25 # number of subjects
+        self.add_reg = add_reg
         
         if not os.path.exists(self.directory) or len(os.listdir(self.directory)) < self.num_subjects:
             print("Making dataset")
@@ -39,14 +40,14 @@ class KTHDataset(Dataset):
             self.subjects = list(set(range(self.num_subjects)) - set(self.subjects)) # list of the remaining 9 test subjects
         print(self.type, "dataset subjects:", self.subjects)
         
-        self.dataset, self.auxdata, self.labels = self.read_dataset() 
+        self.dataset, self.auxdata, self.labels = self.read_dataset()  # self.auxdata is an auxiliary data for only when 'add_reg' is true.  
         
         
     def __len__(self):
         return self.dataset.shape[0]
 
     def __getitem__(self, idx):
-        return (self.dataset[idx], self.auxdata[idx]), self.labels[idx]
+        return (self.dataset[idx], self.auxdata[idx] if self.add_reg else []), self.labels[idx]
 
 
     def read_dataset(self):
@@ -59,10 +60,11 @@ class KTHDataset(Dataset):
             subject = pickle.load(open(filepath, "rb"))
             inputs += subject["input"]
             labels += subject["category"]
-            aux_inputs += subject["aux"]
+            if self.add_reg:
+                aux_inputs += subject["aux"]
             
         inputs = torch.stack(inputs, dim=0)
         labels = torch.LongTensor([CATEGORY_INDEX[l] for l in labels])
-        aux_inputs = torch.stack(aux_inputs, dim=0)
+        aux_inputs = torch.stack(aux_inputs, dim=0) if aux_inputs.size > 0 else aux_inputs
     
         return inputs, aux_inputs, labels

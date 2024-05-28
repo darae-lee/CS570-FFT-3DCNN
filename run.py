@@ -29,13 +29,13 @@ def main(args):
     for i in range(5):
         print("=> {}-th iteration".format(i))
         seed = random.randint(0, 100)
-        train_set = KTHDataset(args.dataset_dir, type="train", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
-        test_set = KTHDataset(args.dataset_dir, type="test", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
+        train_set = KTHDataset(args.dataset_dir, add_reg=args.add_reg, type="train", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
+        test_set = KTHDataset(args.dataset_dir, add_reg=args.add_reg, type="test", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
 
         train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=args.batch_size, num_workers=4, shuffle=True, pin_memory=True) 
         test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=args.batch_size, shuffle=False, pin_memory=True)
 
-        model = Original_Model(mode='KTH').to(device)
+        model = Original_Model(mode='KTH', add_reg=args.add_reg).to(device)
         if args.optim == 'sgd':
             optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
         elif args.optim == 'adam':
@@ -51,7 +51,7 @@ def main(args):
             # log metrics to wandb
             wandb.log({"train loss": train_loss, "train acc.": train_acc, "best acc.": best_acc})
             
-        model.eval()  # test case 학습 방지를 
+        model.eval()  # test case 학습 방지를 위해.
 
         with torch.no_grad(): 
             loss, acc = test(test_loader, model, criterion, device)     
@@ -60,14 +60,12 @@ def main(args):
             
             print('{}-th Test set: Loss = {:.7f}, Acc = {:.4f}\n'.format(i, loss, acc)) 
             # log metrics to wandb
-            # loss_log, acc_log = str(i)+"test loss", str(i)+"test acc."
             wandb.log({"test loss": loss, "test acc.": acc}, step=i)#correct / len(test_loader.dataset)})
             wandb_table.add_data(str(i), loss, acc)
     
     # average the test results
     avg_loss, avg_acc = np.mean(np.array(test_loss)), np.mean(np.array(test_acc))
     wandb.log({"avg test loss": avg_loss, "avg test acc.": avg_acc})
-    wandb_table.add_data("avg", loss)
     wandb.log({"Test Acc": wandb.plot.bar( wandb_table, 
                                            label="repeat", value="acc", title="Test Acc Bar Chart")})
     
@@ -83,7 +81,8 @@ def train(train_loader, model, optimizer, criterion, device):
     train_acc = 0 # best acc
     for (data, aux_data), target in train_loader:
         data = data.to(device)
-        aux_data = aux_data.to(device)
+        if args.add_reg :
+            aux_data = aux_data.to(device)
         target = target.to(device)
         optimizer.zero_grad()  # 기울기 초기화
         output = model(data, aux_data) # forward        # probability = softmax(logit)
@@ -108,7 +107,8 @@ def test(test_loader, model, criterion, device):
     test_acc = 0 # best accuracy
     for (data, aux_data), target in test_loader:
         data = data.to(device)
-        aux_data = aux_data.to(device)
+        if args.add_reg :
+            aux_data = aux_data.to(device)
         target = target.to(device)
         target = target.to(device)
         output = model(data, aux_data)
@@ -122,8 +122,9 @@ def test(test_loader, model, criterion, device):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Single Frame ConvNet")
-    parser.add_argument("--dataset_dir", type=str, default="kth-data-aux",
-                        help="directory to dataset under 'datasets' folder")
+    parser.add_argument("--add_reg", action="store_true")
+    parser.add_argument("--dataset_dir", type=str, default="default",
+                        help="directory to dataset under 'datasets' folder. default: 'kth-data-aux' if --add_reg else 'kth-data'.")
     parser.add_argument("--batch_size", type=int, default=16,
                         help="batch size for training (default: 16)")
     parser.add_argument("--num_epochs", type=int, default=30,
@@ -148,6 +149,9 @@ if __name__ == "__main__":
                         help= "number of consecutive frames as input. choose one of 7 or 9(default).")
 
     args = parser.parse_args()
+    if args.dataset_dir == 'default':
+        args.dataset_dir = 'kth-data-aux' if args.add_reg else 'kth-data'
+        
     wandb.init(  # TODO
         # set the wandb project where this run will be logged
         project="CS570",
@@ -160,6 +164,8 @@ if __name__ == "__main__":
         "learning_rate": args.lr,
         }
     )
-    wandb.run.name = f'{args.optim}-lr-{args.lr}-NE-{args.num_epochs}-aux'
+    wandb.run.name = f'{args.optim}-lr-{args.lr}-NE-{args.num_epochs}'
+    if args.add_reg:
+        wandb.run.name += '-reg'
     main(args)
     wandb.finish()

@@ -114,4 +114,4 @@ dependencies:
       - termcolor==2.4.0
       - tqdm==4.66.4
       - wandb==0.17.0
-prefix: /data2/shcho/anaconda3/envs/cs570
+prefix: /home/{}/anaconda3/envs/cs570

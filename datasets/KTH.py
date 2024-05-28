@@ -6,9 +6,11 @@ from torchvision import transforms, io
 import torch
 import sys
 import fire
+import warnings
 
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(root_dir, 'models'))
+warnings.filterwarnings(action='ignore')
 
 from model import hardwire_layer, auxiliary_feature
 
@@ -27,12 +29,19 @@ base_transform = transforms.Compose([
     transforms.Grayscale(num_output_channels=1)
 ])
 
-def make_raw_dataset(directory="kth-data-aux", transform=None, f=9, device=None):
+def make_raw_dataset(directory="kth-data-aux", add_reg=True, transform=None, f=9, device=None, start_from=0):
     """
     Make a raw dataset(format: {subject_id}.p) into the given directory from the raw KTH video dataset.
     Dataset are divided according to the instruction at:
     http://www.nada.kth.se/cvap/actions/00sequences.txt
     """
+    if add_reg : 
+        print("Add Reg : add the auxiliary features for regularization. It will be take longer time to generate the dataset.")
+    else:
+        if 'aux' in directory:
+            print("Please fix the directory name later not to contain 'aux'.")
+        print("Basic Version : do not add auxiliary features for regularization.")
+    
     frames_idx = parse_sequence_file()
     if not transform :
         transform = base_transform
@@ -42,6 +51,7 @@ def make_raw_dataset(directory="kth-data-aux", transform=None, f=9, device=None)
     dir_path = os.path.join(os.getcwd(), "datasets", directory) # directory path that the processed dataset will be stored
     if not os.path.exists(dir_path):
         os.mkdir(dir_path)
+    print("Dataset savepoint : ", dir_path)
 
     print("Processing ...")
     filenames = [[] for _ in range(subjects)] 
@@ -53,7 +63,7 @@ def make_raw_dataset(directory="kth-data-aux", transform=None, f=9, device=None)
         for (file,s) in zip(cat_files, subject_ids):
             filenames[s].append(file) 
             
-    for subject_id in range(11, subjects):
+    for subject_id in range(start_from, subjects):
         categories = []
         input = []
         
@@ -82,7 +92,8 @@ def make_raw_dataset(directory="kth-data-aux", transform=None, f=9, device=None)
         # hardwiring layer
         input = hardwire_layer(input, device, verbose=True).cpu() # Tensor shape : (N, f, h, w) -> (N, 1, 5f-2, h, w)
         gray_img = input[:,:,:f, :, :]
-        input_aux = auxiliary_feature(gray_img)
+        if add_reg:
+            input_aux = auxiliary_feature(gray_img)
 
         # save the data per each subject
         person_path = os.path.join(dir_path, str(subject_id))
@@ -91,9 +102,11 @@ def make_raw_dataset(directory="kth-data-aux", transform=None, f=9, device=None)
             "category": categories,
             "input": input, # Tensor shape : (N, 1, 5f-2, h, w)
             "subject": subject_id,
-            "aux": input_aux, # Tensor shape : (N, 30)
         }
+        if add_reg:
+            data["aux"] = input_aux # Tensor shape : (N, 300)
         pickle.dump(data, open("%s.p" % person_path, "wb"))
+        print('saved: ',"%s.p" % person_path)
         
     
 
@@ -143,4 +156,4 @@ def parse_sequence_file():
 if __name__ == "__main__":
     #TODO : add kth_download
     print("Making dataset")
-    fire.Fire(make_raw_dataset())
+    fire.Fire(make_raw_dataset)

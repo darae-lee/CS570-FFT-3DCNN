@@ -9,7 +9,8 @@ import wandb
 
 
 def main(args): 
-    print("learning rate: ", args.lr, "\tnum epochs: ", args.num_epochs, "\n")
+    print("learning rate: ", args.lr, "\tnum epochs: ", args.num_epochs, 
+          "\tregularization: ", args.add_reg, "\tlambda: "+ str(args.lbda)+"\n" if args.add_reg else "\n")
 
     if args.gpu == -1:
         print('disable cuda. ')
@@ -27,10 +28,9 @@ def main(args):
 
     test_loss, test_acc = [], [] # list of the test results for 5 repeats
     total_iteration = 1
-    seed_candidate = [0]
     for i in range(total_iteration):
         print("=> {}-th iteration".format(i))
-        seed = random.randint(0, 100)
+        seed = args.seed + i
         train_set = KTHDataset(args.dataset_dir, add_reg=args.add_reg, type="train", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
         test_set = KTHDataset(args.dataset_dir, add_reg=args.add_reg, type="test", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
 
@@ -99,19 +99,27 @@ def train(train_loader, model, optimizer, criterion, device):
     train_loss = 0
     train_acc = 0 # best acc
     for (data, aux_data), target in train_loader:
+
         data = data.to(device)
         if args.add_reg :
             aux_data = aux_data.to(device)
         target = target.to(device)
         optimizer.zero_grad()  # 기울기 초기화
-        output = model(data, aux_data) # forward        # probability = softmax(logit)
-        loss = criterion(output, target) 
+        output = model(data) # forward        # probability = softmax(logit)
+        if args.add_reg:
+            pred_feat = output[:, :aux_data.size(-1)]
+            pred_feat = (pred_feat - pred_feat.mean()) / pred_feat.std()
+            aux_data = (aux_data - aux_data.mean()) / aux_data.std()
+            regularization = torch.nn.functional.mse_loss(pred_feat, aux_data)
+        else:
+            regularization = 0
+        loss = criterion(output[:, -model.classes:], target) + args.lbda * regularization
         loss.backward()  # 역전파
         optimizer.step()
         
         # for monitoring
         train_loss += loss.item() 
-        pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
+        pred = output[:, -model.classes:].argmax(dim=1, keepdim=True) # get the index of the max log-probability
         train_acc += pred.eq(target.view_as(pred)).sum().item()
     
     train_acc /= len(train_loader.dataset) # average
@@ -129,10 +137,17 @@ def test(test_loader, model, criterion, device):
         if args.add_reg :
             aux_data = aux_data.to(device)
         target = target.to(device)
-        target = target.to(device)
-        output = model(data, aux_data)
-        test_loss += criterion(output, target).item() # sum up batch loss
-        pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
+        output = model(data)
+        if args.add_reg:
+            pred_feat = output[:, :aux_data.size(-1)]
+            pred_feat = (pred_feat - pred_feat.mean()) / pred_feat.std()
+            aux_data = (aux_data - aux_data.mean()) / aux_data.std()
+            regularization = torch.nn.functional.mse_loss(pred_feat, aux_data)
+        else:
+            regularization = 0
+        loss = criterion(output[:, -model.classes:], target) + args.lbda * regularization
+        test_loss += loss.item() # sum up batch loss
+        pred = output[:, -model.classes:].argmax(dim=1, keepdim=True) # get the index of the max log-probability
         test_acc += pred.eq(target.view_as(pred)).sum().item()
     
     test_acc /= len(test_loader.dataset) # average
@@ -166,6 +181,9 @@ if __name__ == "__main__":
     parser.add_argument("--height", type=int, default = 80)
     parser.add_argument("--frame", type=int, default = 9,
                         help= "number of consecutive frames as input. choose one of 7 or 9(default).")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--lbda", type=float, default=0.005,
+                        help="lambda for regularization (default: 0.005)")
 
     args = parser.parse_args()
     if args.dataset_dir == 'default':

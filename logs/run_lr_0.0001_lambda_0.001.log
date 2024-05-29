@@ -1,0 +1,67 @@
+wandb: Currently logged in as: orangingq. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.17.0
+wandb: Run data is saved locally in /home/shcho/cs570/wandb/run-20240529_034018-7nurh4de
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run light-sea-147
+wandb: ⭐️ View project at https://wandb.ai/orangingq/CS570
+wandb: 🚀 View run at https://wandb.ai/orangingq/CS570/runs/7nurh4de
+learning rate:  0.0001 	num epochs:  30 	regularization:  True 	lambda: 0.001
+
+cuda:0 is available. 
+
+=> 0-th iteration
+train dataset subjects: [20, 3, 0, 8, 7, 24, 4, 23, 2, 13, 22, 14, 1, 17, 11, 21]
+reading data:   0%|          | 0/16 [00:00<?, ?it/s]reading data:   6%|▋         | 1/16 [00:01<00:21,  1.44s/it]reading data:  12%|█▎        | 2/16 [00:02<00:18,  1.31s/it]reading data:  19%|█▉        | 3/16 [00:03<00:14,  1.08s/it]reading data:  25%|██▌       | 4/16 [00:04<00:11,  1.09it/s]reading data:  31%|███▏      | 5/16 [00:04<00:09,  1.18it/s]reading data:  38%|███▊      | 6/16 [00:05<00:08,  1.21it/s]reading data:  44%|████▍     | 7/16 [00:06<00:06,  1.29it/s]reading data:  50%|█████     | 8/16 [00:07<00:06,  1.30it/s]reading data:  56%|█████▋    | 9/16 [00:07<00:05,  1.28it/s]reading data:  62%|██████▎   | 10/16 [00:08<00:04,  1.27it/s]reading data:  69%|██████▉   | 11/16 [00:09<00:03,  1.30it/s]reading data:  75%|███████▌  | 12/16 [00:10<00:03,  1.31it/s]reading data:  81%|████████▏ | 13/16 [00:10<00:02,  1.32it/s]reading data:  88%|████████▊ | 14/16 [00:11<00:01,  1.30it/s]reading data:  94%|█████████▍| 15/16 [00:12<00:00,  1.25it/s]reading data: 100%|██████████| 16/16 [00:13<00:00,  1.28it/s]reading data: 100%|██████████| 16/16 [00:13<00:00,  1.20it/s]
+test dataset subjects: [5, 6, 9, 10, 12, 15, 16, 18, 19]
+reading data:   0%|          | 0/9 [00:00<?, ?it/s]reading data:  11%|█         | 1/9 [00:00<00:05,  1.42it/s]reading data:  22%|██▏       | 2/9 [00:01<00:05,  1.33it/s]reading data:  33%|███▎      | 3/9 [00:02<00:04,  1.36it/s]reading data:  44%|████▍     | 4/9 [00:02<00:03,  1.39it/s]reading data:  56%|█████▌    | 5/9 [00:03<00:02,  1.39it/s]reading data:  67%|██████▋   | 6/9 [00:04<00:02,  1.34it/s]reading data:  78%|███████▊  | 7/9 [00:05<00:01,  1.37it/s]reading data:  89%|████████▉ | 8/9 [00:05<00:00,  1.36it/s]reading data: 100%|██████████| 9/9 [00:06<00:00,  1.37it/s]reading data: 100%|██████████| 9/9 [00:06<00:00,  1.37it/s]
+Epoch   0 : Train Loss = 1341.304269, Train Acc = 0.379828, Test Loss = 609.204665, Test Acc = 0.455426
+Epoch   1 : Train Loss = 997.220097, Train Acc = 0.515848, Test Loss = 566.026652, Test Acc = 0.492999
+Epoch   2 : Train Loss = 907.244720, Train Acc = 0.552547, Test Loss = 551.147033, Test Acc = 0.517036
+Epoch   3 : Train Loss = 825.725537, Train Acc = 0.604132, Test Loss = 528.840700, Test Acc = 0.554726
+Epoch   4 : Train Loss = 754.391804, Train Acc = 0.644681, Test Loss = 543.475346, Test Acc = 0.565344
+Epoch   5 : Train Loss = 698.225683, Train Acc = 0.677852, Test Loss = 533.977314, Test Acc = 0.580397
+Epoch   6 : Train Loss = 656.532961, Train Acc = 0.696394, Test Loss = 548.003506, Test Acc = 0.574796
+Epoch   7 : Train Loss = 619.063615, Train Acc = 0.712883, Test Loss = 566.374634, Test Acc = 0.576896
+Epoch   8 : Train Loss = 584.480103, Train Acc = 0.732131, Test Loss = 570.283797, Test Acc = 0.584014
+Epoch   9 : Train Loss = 561.438242, Train Acc = 0.742397, Test Loss = 603.654975, Test Acc = 0.577130
+Epoch  10 : Train Loss = 533.658232, Train Acc = 0.757475, Test Loss = 597.196755, Test Acc = 0.593816
+Epoch  11 : Train Loss = 519.069114, Train Acc = 0.761196, Test Loss = 609.026238, Test Acc = 0.586581
+Epoch  12 : Train Loss = 498.786189, Train Acc = 0.770692, Test Loss = 589.676738, Test Acc = 0.607001
+Epoch  13 : Train Loss = 479.236883, Train Acc = 0.783844, Test Loss = 612.905451, Test Acc = 0.604201
+Epoch  14 : Train Loss = 464.041793, Train Acc = 0.787630, Test Loss = 649.037020, Test Acc = 0.593932
+Epoch  15 : Train Loss = 452.591311, Train Acc = 0.794880, Test Loss = 665.626918, Test Acc = 0.595683
+Epoch  16 : Train Loss = 439.761690, Train Acc = 0.800590, Test Loss = 662.171555, Test Acc = 0.581447
+wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.019 MB uploadedwandb: | 0.016 MB of 0.019 MB uploadedwandb: / 0.016 MB of 0.019 MB uploadedwandb: - 0.019 MB of 0.019 MB uploadedwandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:  avg test acc ▁
+wandb: avg test loss ▁
+wandb:     best acc. ▁▆▇▇▇█████████████
+wandb:     test acc. ▁▃▄▆▆▇▇▇▇▇▇▇██▇▇▇█
+wandb:     test loss ▅▃▂▁▂▁▂▃▃▅▄▅▄▅▇███
+wandb:    train acc. ▁▃▄▅▅▆▆▇▇▇▇▇▇█████
+wandb:    train loss █▅▅▄▄▃▃▂▂▂▂▂▂▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:  avg test acc 0.60653
+wandb: avg test loss 671.65702
+wandb:     best acc. 0.607
+wandb:     test acc. 0.60653
+wandb:     test loss 671.65702
+wandb:    train acc. 0.80303
+wandb:    train loss 426.19734
+wandb: 
+wandb: 🚀 View run light-sea-147 at: https://wandb.ai/orangingq/CS570/runs/7nurh4de
+wandb: ⭐️ View project at: https://wandb.ai/orangingq/CS570
+wandb: Synced 6 W&B file(s), 1 media file(s), 1 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20240529_034018-7nurh4de/logs
+wandb: WARNING Step only supports monotonically increasing values, use define_metric to set a custom x axis. For details see: https://wandb.me/define-metric
+wandb: WARNING (User provided step: 0 is less than current step: 18. Dropping entry: {'test loss': 671.6570220561698, 'test acc.': 0.606534422403734, '_timestamp': 1716921979.0806074}).
+Epoch  17 : Train Loss = 426.197341, Train Acc = 0.803028, Test Loss = 671.657022, Test Acc = 0.606534
+Early stopping at epoch 17
+0-th Test set: Loss = 671.6570221, Acc = 0.6065
+
+
+Final Test Result: 
+Loss = 671.6570221, Acc = 0.6065 (60.7%)
+

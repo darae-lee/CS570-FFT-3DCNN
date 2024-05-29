@@ -65,6 +65,6 @@ class KTHDataset(Dataset):
             
         inputs = torch.stack(inputs, dim=0)
         labels = torch.LongTensor([CATEGORY_INDEX[l] for l in labels])
-        aux_inputs = torch.stack(aux_inputs, dim=0) if aux_inputs.size > 0 else aux_inputs
+        aux_inputs = torch.stack(aux_inputs, dim=0) if len(aux_inputs) > 0 else aux_inputs
     
         return inputs, aux_inputs, labels

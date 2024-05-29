@@ -5,8 +5,6 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-import warnings
 from sklearn.decomposition import PCA
 
 def hardwire_layer(input, device, verbose=False):
@@ -22,6 +20,7 @@ def hardwire_layer(input, device, verbose=False):
     ############################################################################################
     """
     assert len(input.shape) == 4 
+    import time; start_time = time.time()
     if verbose: print("Before hardwired layer:\t", input.shape)
     N, f, h, w = input.shape
     
@@ -47,7 +46,7 @@ def hardwire_layer(input, device, verbose=False):
     
     hardwired = torch.cat([gray, x_gradient, y_gradient, x_flow, y_flow], dim=1)
     hardwired = hardwired.unsqueeze(dim=1)
-    if verbose: print("After hardwired layer :\t", hardwired.shape)
+    if verbose: print(f"After hardwired layer :\t{hardwired.shape} \t({time.time()-start_time:.3f} seconds)")
     return hardwired
 
 
@@ -68,11 +67,11 @@ def compute_dense_sift(inputs, sift=None, pbar=None):
     all_descriptors_list = []
     all_keypoints_list = []
     for size in sizes:
-        keypoints = [[cv2.KeyPoint(x, y, size) for y in range(0, h, step_size) for x in range(0, w, step_size)] for _ in range(f)]
+        keypoints = [cv2.KeyPoint(x, y, size) for y in range(0, h, step_size) for x in range(0, w, step_size)]
         if pbar: pbar.update(1)
-        all_descriptors_list += [[[sift.compute(image, keypoints[i])[1] for i, image in enumerate(frames)] for frames in inputs]]
+        all_descriptors_list.append([[sift.compute(image, keypoints)[1] for image in frames] for frames in inputs])
         if pbar: pbar.update(10)
-        all_keypoints_list += [np.concatenate([[kp.pt for kp in keypoints[j]] for j in range(f)])]
+        all_keypoints_list.append(np.concatenate([[kp.pt for kp in keypoints] for _ in range(f)]))
         if pbar: pbar.update(1)
     descriptors, keypoints = np.reshape(all_descriptors_list, newshape=(N, -1, dimension)), np.concatenate(all_keypoints_list)
     
@@ -90,17 +89,6 @@ def compute_mehi(inputs):
     """
     return np.abs(np.diff(inputs, axis=1))
 
-def softly_quantize_descriptors(descriptors, kmeans):
-    """
-    Function to softly quantize descriptors using a codebook
-    inputs : descriptors: (N, num_features, 128)
-    output : soft_assigments (N, num_features, 1)
-    """
-    N = len(descriptors)
-    distances = np.stack([kmeans.transform(descriptors[n, :]) for n in range(N)])
-    soft_assignments = np.exp(-distances)
-    soft_assignments /= soft_assignments.sum(axis=2, keepdims=True)
-    return soft_assignments
 
 def construct_spm_features(descriptors, keypoints, image_shape, kmeans, pbar=None):
     """
@@ -112,15 +100,24 @@ def construct_spm_features(descriptors, keypoints, image_shape, kmeans, pbar=Non
     h, w = image_shape
     pyramid_levels = [(2, 2), (3, 4)]
     spm_features = []
+    
+    # softly quantize descriptors
+    distances = torch.tensor(np.stack([kmeans.transform(descriptors[n, :]) for n in range(N)])).to('cuda')
+    
+    soft_list = []
+    for distance in distances:
+        soft_score = torch.softmax(distance, dim=1)
+        soft_list.append(soft_score.detach().cpu())
+    soft_assignments = torch.stack(soft_list, dim=0)
+    soft_assignments = soft_assignments.numpy()
+    
     for level in pyramid_levels:
         num_cells_x, num_cells_y = level
         cell_h, cell_w = h // num_cells_y, w // num_cells_x
         for i in range(num_cells_y):
             for j in range(num_cells_x):
-                cell_descriptors = descriptors[:, (j * cell_w <= keypoints[:, 0]) & (keypoints[:, 0] < (j + 1) * cell_w) 
-                                            & (i * cell_h <= keypoints[:, 1]) & (keypoints[:, 1] < (i + 1) * cell_h)]
-                soft_assignments = softly_quantize_descriptors(cell_descriptors, kmeans)
-                spm_feature = soft_assignments.sum(axis=1)
+                spm_feature = soft_assignments[:, (j * cell_w <= keypoints[:, 0]) & (keypoints[:, 0] < (j + 1) * cell_w) 
+                                            & (i * cell_h <= keypoints[:, 1]) & (keypoints[:, 1] < (i + 1) * cell_h)].sum(axis=1)
                 spm_features += [spm_feature]
                 if pbar: pbar.update(1)
     spm_features = np.concatenate(spm_features, axis=1)
@@ -141,7 +138,7 @@ def auxiliary_feature(gray, num_clusters=512, verbose=False):
 
     gray = (np.squeeze(gray).cpu().numpy() * 255).astype(np.uint8) # numpy array of shape (N, f, h, w)
     mehi = compute_mehi(gray)   # (N, f-1, h, w)
-    
+
     # compute SIFT from gray image, MEHI
     pbar = tqdm(total=82, desc="Auxiliary") if verbose else None
     dense_sift_descriptors_gray, keypoints_gray = compute_dense_sift(gray, sift=sift, pbar=pbar) # shape: (N, num_desc, 128), (num_desc, 2)
@@ -159,9 +156,8 @@ def auxiliary_feature(gray, num_clusters=512, verbose=False):
 
     auxiliary_tensor = torch.concat([spm_features_gray_pca, spm_features_mehi_pca], dim=1).type(torch.float32) # shape: (N, 300)
     pbar.close()
-    
+
     assert auxiliary_tensor.shape == (N, 300)
-    
     return auxiliary_tensor
 
 
@@ -198,7 +194,7 @@ class Original_Model(nn.Module):
             self.pool1 = nn.MaxPool2d(3)
             self.pool2 = nn.MaxPool2d(3)
             self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=self.last_dim, kernel_size=(6,4), stride=1)
-            self.fc1 = nn.Linear(self.last_dim + self.aux_dim if self.add_reg else self.last_dim, self.classes, bias=False)
+            self.fc1 = nn.Linear(self.last_dim, self.aux_dim + self.classes if self.add_reg else self.classes, bias=False)
 
         elif self.mode == 'TRECVID':
             self.classes = 3
@@ -207,9 +203,9 @@ class Original_Model(nn.Module):
             self.pool1 = nn.MaxPool2d(2)
             self.pool2 = nn.MaxPool2d(3)
             self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=self.last_dim, kernel_size=(7,4), stride=1)
-            self.fc1 = nn.Linear(self.last_dim + self.aux_dim if self.add_reg else self.last_dim, self.classes, bias=False)
+            self.fc1 = nn.Linear(self.last_dim, self.aux_dim + self.classes if self.add_reg else self.classes, bias=False)
 
-    def forward(self, x, aux):
+    def forward(self, x):
         if self.verbose: print("연산 전:\t", x.size())
         assert x.size()[1] == 1
 
@@ -219,11 +215,6 @@ class Original_Model(nn.Module):
         x3 = self.conv1(x3)
         x4 = self.conv1(x4)
         x5 = self.conv1(x5)
-        # x1 = F.relu(self.conv1(x1))
-        # x2 = F.relu(self.conv1(x2))
-        # x3 = F.relu(self.conv1(x3))
-        # x4 = F.relu(self.conv1(x4))
-        # x5 = F.relu(self.conv1(x5))
         x = torch.cat([x1, x2, x3, x4, x5], dim=2)
         if self.verbose: print("conv1 연산 후:\t", x.shape)
 
@@ -249,10 +240,10 @@ class Original_Model(nn.Module):
         x = F.relu(self.conv3(x))
         if self.verbose: print("conv3 연산 후:\t", x.shape)
 
-        if self.add_reg:
-            x = torch.cat((x.view(-1, self.last_dim),aux), dim=1)
-        else:
-            x = x.view(-1, self.last_dim)
+        # if self.add_reg:
+        #     x = torch.cat((x.view(-1, self.last_dim)), dim=1)
+        # else:
+        x = x.view(-1, self.last_dim)
         x = self.fc1(x)# [:,:self.classes]
         if self.verbose: print("fc1 연산 후:\t", x.shape)
 

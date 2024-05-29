@@ -163,8 +163,6 @@ if __name__ == "__main__":
                         help="batch size for training (default: 16)")
     parser.add_argument("--num_epochs", type=int, default=30,
                         help="number of epochs to train (default: 30)")
-    # parser.add_argument("--start_epoch", type=int, default=1,
-    #                     help="start index of epoch (default: 1)")
     parser.add_argument("--lr", type=float, default=0.001,
                         help="learning rate for training (default: 0.001)")
     parser.add_argument("--weight_decay", type=float, default=1e-4,
@@ -173,8 +171,6 @@ if __name__ == "__main__":
                         help="weight decay for training with SGD optimizer (default: 0.9)")
     parser.add_argument("--optim", type=str, default="adam",
                         help="optimizer for training (choose one of 'adam' or 'sgd')")
-    # parser.add_argument("--log", type=int, default=10,
-    #                     help="log frequency (default: 10 iterations)")
     parser.add_argument("--gpu", type=int, default=0,
                         help="set gpu rank to run cuda (set -1 to use cpu only)")
     parser.add_argument("--width", type=int, default = 60)
@@ -188,21 +184,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.dataset_dir == 'default':
         args.dataset_dir = 'kth-data-aux' if args.add_reg else 'kth-data'
-        
+    
+    config = {"architecture": "3D CNN", "dataset": "KTH"}
+    config_name = {'lr': 'learning_rate', 'optim':'optimizer', 'num_epochs':'epochs'}
+    for k in args.__dict__:
+        if k in config_name.keys():
+            config[config_name[k]] = args.__dict__[k]
+        else:
+            config[k] = args.__dict__[k]
+
     wandb.init(  # TODO
         # set the wandb project where this run will be logged
-        project="CS570",
-        # track hyperparameters and run metadata
-        config={
-        "architecture": "3D CNN",
-        "dataset": "KTH",
-        "optimizer": args.optim,
-        "epochs": args.num_epochs,
-        "learning_rate": args.lr,
-        }
+        project="CS570", 
+        config=config
     )
-    wandb.run.name = f'{args.optim}-lr-{args.lr}-NE-{args.num_epochs}'
-    if args.add_reg:
-        wandb.run.name += '-reg'
+    wandb.run.name = f'{args.optim}-lr-{args.lr}-NE-{args.num_epochs}' + ('-reg' if args.add_reg else '')
     main(args)
     wandb.finish()

@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 
 def hardwire_layer(input, device, verbose=False):
     """
-    Proprocess the given consecutive input (grayscaled) frames into 5 different styles. 
+    Preprocess the given consecutive input (grayscaled) frames into 5 different styles. 
     input : array of shape (N, frames, height, width)
     ex) TRECVID dataset : (N, 7, 60, 40),  KTH dataset : (N, 9, 80, 60)
     
@@ -20,21 +20,35 @@ def hardwire_layer(input, device, verbose=False):
     ############################################################################################
     """
     assert len(input.shape) == 4 
-    import time; start_time = time.time()
     if verbose: print("Before hardwired layer:\t", input.shape)
     N, f, h, w = input.shape
     
     hardwired = torch.zeros((N, 5*f-2, h, w)).to(device) 
     input = input.to(device)
 
-    gray = input.clone()
-    x_gradient, y_gradient = torch.gradient(gray, dim=[2,3])
+    # Clone the input tensor and move it to the specified device
+    input_cloned = input.clone().to(device)
+    
+    # Normalize each type of data separately
+    gray_mean = input_cloned.mean()
+    gray_std = input_cloned.std()
+    gray_normalized = (input_cloned - gray_mean) / gray_std
+
+    x_gradient = torch.gradient(input_cloned, dim=[2,3])[0]
+    x_gradient_mean = x_gradient.mean()
+    x_gradient_std = x_gradient.std()
+    x_gradient_normalized = (x_gradient - x_gradient_mean) / x_gradient_std
+
+    y_gradient = torch.gradient(input_cloned, dim=[2,3])[1]
+    y_gradient_mean = y_gradient.mean()
+    y_gradient_std = y_gradient.std()
+    y_gradient_normalized = (y_gradient - y_gradient_mean) / y_gradient_std
 
     x_flow = []
     y_flow = []
     for i in range(N):
-        prevs = input[i, :-1].detach().cpu().numpy()
-        nexts = input[i, 1:].detach().cpu().numpy()
+        prevs = input_cloned[i, :-1].detach().cpu().numpy()
+        nexts = input_cloned[i, 1:].detach().cpu().numpy()
         for prev_, next_ in zip(prevs, nexts):
             flow = cv2.calcOpticalFlowFarneback(prev_, next_,
                                                 None, 0.5, 3, 15, 3, 5, 1.1,
@@ -43,10 +57,24 @@ def hardwire_layer(input, device, verbose=False):
             y_flow.append(torch.tensor(flow[...,1]))
     x_flow = torch.stack(x_flow, dim=0).reshape(N, f-1, h, w).to(device)
     y_flow = torch.stack(y_flow, dim=0).reshape(N, f-1, h, w).to(device)
+
+    x_flow_mean = x_flow.mean()
+    x_flow_std = x_flow.std()
+    x_flow_normalized = (x_flow - x_flow_mean) / x_flow_std
+
+    y_flow_mean = y_flow.mean()
+    y_flow_std = y_flow.std()
+    y_flow_normalized = (y_flow - y_flow_mean) / y_flow_std
     
-    hardwired = torch.cat([gray, x_gradient, y_gradient, x_flow, y_flow], dim=1)
+    # Concatenate all the preprocessed data
+    hardwired[:, :f, :, :] = gray_normalized
+    hardwired[:, f:f*2, :, :] = x_gradient_normalized
+    hardwired[:, f*2:f*3, :, :] = y_gradient_normalized
+    hardwired[:, f*3:f*4-1, :, :] = x_flow_normalized
+    hardwired[:, f*4-1:, :, :] = y_flow_normalized
+
     hardwired = hardwired.unsqueeze(dim=1)
-    if verbose: print(f"After hardwired layer :\t{hardwired.shape} \t({time.time()-start_time:.3f} seconds)")
+    if verbose: print("After hardwired layer :\t", hardwired.shape)
     return hardwired
 
 
@@ -216,6 +244,7 @@ class Original_Model(nn.Module):
         x4 = self.conv1(x4)
         x5 = self.conv1(x5)
         x = torch.cat([x1, x2, x3, x4, x5], dim=2)
+        x = self.dropout(x)
         if self.verbose: print("conv1 연산 후:\t", x.shape)
 
         x = x.view(x.shape[0], -1, x.shape[3], x.shape[4])
@@ -230,6 +259,7 @@ class Original_Model(nn.Module):
         x4 = self.conv2(x4)
         x5 = self.conv2(x5)
         x = torch.cat([x1, x2, x3, x4, x5], dim=2)
+        x = self.dropout(x)
         if self.verbose: print("conv2 연산 후:\t",x.shape)
 
         x = x.view(x.shape[0], -1, x.shape[3], x.shape[4])
@@ -243,6 +273,7 @@ class Original_Model(nn.Module):
         # if self.add_reg:
         #     x = torch.cat((x.view(-1, self.last_dim)), dim=1)
         # else:
+        x = self.dropout(x)
         x = x.view(-1, self.last_dim)
         x = self.fc1(x)# [:,:self.classes]
         if self.verbose: print("fc1 연산 후:\t", x.shape)

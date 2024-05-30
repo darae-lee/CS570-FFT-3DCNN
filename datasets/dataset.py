@@ -3,7 +3,6 @@ import pickle
 import torch
 from torch.utils.data import Dataset
 import random
-# from models.model import hardwire_layer
 from tqdm import tqdm
 from datasets.KTH import make_raw_dataset
 
@@ -22,16 +21,33 @@ class KTHDataset(Dataset):
     if random=True : randomly select 16 subjects for train dataset, and put remaining 9 subjects for test dataset.
     * No valid dataset. (Following the paper's dataset preprocessing method.)
     """
-    def __init__(self, directory="kth-data-aux", add_reg=True, type="train", transform= None, frames = 9, seed=2, device=torch.device('cuda')) :
+    def __init__(self,
+                directory="kth-data-aux",
+                fft=None, 
+                cut_param=1.0,
+                add_reg=True, 
+                type="train", 
+                transform= None, 
+                frames = 9, 
+                seed=2, 
+                device=torch.device('cuda')) :
         self.directory = os.path.join(os.getcwd(), "datasets", directory)
         self.type = type
         self.device = device
         self.num_subjects = 25 # number of subjects
+        self.fft = fft
+        self.cut_parm = 1.0
         self.add_reg = add_reg
         
         if not os.path.exists(self.directory) or len(os.listdir(self.directory)) < self.num_subjects:
             print("Making dataset")
-            make_raw_dataset(directory=directory, transform=transform, f=frames, device=self.device)
+            make_raw_dataset(directory=directory, 
+                            fft=fft,
+                            cut_param=cut_param,
+                            add_reg=add_reg, 
+                            transform=transform, 
+                            f=frames, 
+                            device=self.device)
         assert len(os.listdir(self.directory)) == self.num_subjects
         
         random.seed(seed)

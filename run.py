@@ -31,13 +31,34 @@ def main(args):
     for i in range(total_iteration):
         print("=> {}-th iteration".format(i))
         seed = args.seed + i
-        train_set = KTHDataset(args.dataset_dir, add_reg=args.add_reg, type="train", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
-        test_set = KTHDataset(args.dataset_dir, add_reg=args.add_reg, type="test", transform = torchvision_transform, frames = args.frame, seed=seed, device=device)
+        train_set = KTHDataset(args.dataset_dir, 
+                                fft=args.fft,
+                                cut_param=args.cut_param,
+                                add_reg=args.add_reg, 
+                                type="train", 
+                                transform = torchvision_transform, 
+                                frames = args.frame, 
+                                seed=seed, 
+                                device=device)
+        test_set = KTHDataset(args.dataset_dir, 
+                                fft=args.fft,
+                                cut_param=args.cut_param,
+                                add_reg=args.add_reg, 
+                                type="test", 
+                                transform = torchvision_transform, 
+                                frames = args.frame, 
+                                seed=seed, 
+                                device=device)
 
         train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=args.batch_size, num_workers=4, shuffle=True, pin_memory=True) 
         test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=args.batch_size, shuffle=False, pin_memory=True)
 
-        model = Original_Model(mode='KTH', add_reg=args.add_reg).to(device)
+        if args.fft == "FFT":
+            model = FFT_Model(mode='KTH', cut_param=args.cut_param).to(device)
+        elif args.fft == "FFT3":
+            model = FFT3_Model(mode='KTH', cut_param=args.cut_param).to(device)
+        else:
+            model = Original_Model(mode='KTH', add_reg=args.add_reg).to(device)
         if args.optim == 'sgd':
             optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
         elif args.optim == 'adam':
@@ -48,7 +69,7 @@ def main(args):
         best_acc = 0
         best_epoch = 0
         stop_count = 0
-        patience = 5
+        patience = 50
         for epoch in range(args.num_epochs):
             train_loss, train_acc = train(train_loader, model, optimizer, criterion, device)
             
@@ -155,8 +176,10 @@ def test(test_loader, model, criterion, device):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Single Frame ConvNet")
+    parser = argparse.ArgumentParser(description="Pre-process dataset and Train model")
+    parser.add_argument("--fft", type=str, default=None)
     parser.add_argument("--add_reg", action="store_true")
+    parser.add_argument("--cut_param", type=float, default=1.0)
     parser.add_argument("--dataset_dir", type=str, default="default",
                         help="directory to dataset under 'datasets' folder. default: 'kth-data-aux' if --add_reg else 'kth-data'.")
     parser.add_argument("--batch_size", type=int, default=16,

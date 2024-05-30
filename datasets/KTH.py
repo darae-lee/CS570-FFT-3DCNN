@@ -12,8 +12,7 @@ root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(root_dir, 'models'))
 warnings.filterwarnings(action='ignore')
 
-from model import hardwire_layer, auxiliary_feature
-
+from model import hardwire_layer, auxiliary_feature, hardwire_layer_for_FFT, hardwire_layer_for_FFT3
 
 CATEGORIES = [
     "boxing",
@@ -29,7 +28,7 @@ base_transform = transforms.Compose([
     transforms.Grayscale(num_output_channels=1)
 ])
 
-def make_raw_dataset(directory="kth-data-aux", add_reg=True, transform=None, f=9, device=None, start_from=0):
+def make_raw_dataset(directory="kth-data-aux", fft=None, cut_param=1.0, add_reg=True, transform=None, f=9, device=None):
     """
     Make a raw dataset(format: {subject_id}.p) into the given directory from the raw KTH video dataset.
     Dataset are divided according to the instruction at:
@@ -63,7 +62,7 @@ def make_raw_dataset(directory="kth-data-aux", add_reg=True, transform=None, f=9
         for (file,s) in zip(cat_files, subject_ids):
             filenames[s].append(file) 
             
-    for subject_id in range(start_from, subjects):
+    for subject_id in range(subjects):
         categories = []
         input = []
         
@@ -90,10 +89,15 @@ def make_raw_dataset(directory="kth-data-aux", add_reg=True, transform=None, f=9
         input = torch.cat(input, dim=0)
             
         # hardwiring layer
-        input = hardwire_layer(input, device, verbose=True).cpu() # Tensor shape : (N, f, h, w) -> (N, 1, 5f-2, h, w)
-        gray_img = input[:,:,:f, :, :]
-        if add_reg:
-            input_aux = auxiliary_feature(gray_img, verbose=True)
+        if fft == "FFT":
+            input = hardwire_layer_for_FFT(input, device, verbose=True, cut_param=cut_param).cpu() # Tensor shape : (N, f, h, w) -> (N, 1, 2f, h, w)
+        elif fft == "FFT3":
+            input = hardwire_layer_for_FFT3(input, device, verbose=True, cut_param=cut_param).cpu() # Tensor shape : (N, f, h, w) -> (N, 1, 5f, h, w)
+        else:
+            input = hardwire_layer(input, device, verbose=True).cpu() # Tensor shape : (N, f, h, w) -> (N, 1, 5f-2, h, w)
+            gray_img = input[:,:,:f, :, :]
+            if add_reg:
+                input_aux = auxiliary_feature(gray_img, verbose=True)
 
         # save the data per each subject
         person_path = os.path.join(dir_path, str(subject_id))

@@ -387,7 +387,7 @@ class Original_Model(nn.Module):
         self.dim1, self.dim2 = (self.dim-10)*2, (self.dim-20)*6
         self.last_dim, self.aux_dim = 128, 300
 
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=0.3)
 
         if self.mode == 'KTH':
             self.classes = 6
@@ -413,6 +413,7 @@ class Original_Model(nn.Module):
 
         x = x.view(x.shape[0], -1, x.shape[3], x.shape[4])
         x = self.pool1(F.relu(x))
+        x = self.dropout(x)
         x = x.view(-1, 2, self.dim1//2, x.shape[2], x.shape[3])
         if self.verbose: print("pool1 연산 후:\t", x.shape)
 
@@ -427,6 +428,7 @@ class Original_Model(nn.Module):
 
         x = x.view(x.shape[0], -1, x.shape[3], x.shape[4])
         x = self.pool2(F.relu(x))
+        x = self.dropout(x)
         x = x.view(-1, self.dim2, x.shape[2], x.shape[3])
         if self.verbose: print("pool2 연산 후:\t", x.shape)
 
@@ -458,7 +460,10 @@ class FFT_Model(nn.Module):
         self.dim1, self.dim2 = (self.dim-4)*2, (self.dim-8)*6
         self.last_dim = 128
 
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=0.2)
+        self.batch_norm1 = nn.BatchNorm3d(2)
+        self.batch_norm2 = nn.BatchNorm3d(6)
+        self.batch_norm3 = nn.BatchNorm2d(self.last_dim)
 
         if self.mode == 'KTH' and self.cut_param == 0.5:
             self.classes = 6
@@ -484,36 +489,57 @@ class FFT_Model(nn.Module):
             self.pool2 = nn.MaxPool2d(3)
             self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=self.last_dim, kernel_size=(6,4), stride=1)
             self.fc1 = nn.Linear(self.last_dim, self.classes, bias=False)
+        elif self.mode == 'KTH' and self.cut_param == 0.8:
+            self.classes = 6
+            self.conv1 = nn.Conv3d(in_channels=1, out_channels=2, kernel_size=(3,10,8), stride=1)
+            self.conv2 = nn.Conv3d(in_channels=2, out_channels=6, kernel_size=(3,5,4), stride=1)
+            self.pool1 = nn.MaxPool2d(2)
+            self.pool2 = nn.MaxPool2d(3)
+            self.conv3 = nn.Conv2d(in_channels=self.dim2, out_channels=self.last_dim, kernel_size=(8, 6), stride=1)
+            self.fc1 = nn.Linear(self.last_dim, self.classes, bias=False)
 
     def forward(self, x):
         if self.verbose: print("연산 전:\t", x.size())
         assert x.size()[1] == 1
 
         (x1, x2) = torch.split(x, [self.f,self.f], dim=2)
-        x1 = F.relu(self.conv1(x1))
-        x2 = F.relu(self.conv1(x2))
+        x1 = self.conv1(x1)
+        x2 = self.conv1(x2)
+        # x1 = self.batch_norm1(x1)
+        # x2 = self.batch_norm1(x2)
+        x1 = F.relu(x1)
+        x2 = F.relu(x2)
 
         x = torch.cat([x1, x2], dim=2)
         if self.verbose: print("conv1 연산 후:\t", x.shape)
 
         x = x.view(x.shape[0], -1, x.shape[3], x.shape[4])
         x = self.pool1(x)
+        x = self.dropout(x)
         x = x.view(-1, 2, self.dim1//2, x.shape[2], x.shape[3])
         if self.verbose: print("pool1 연산 후:\t", x.shape)
 
         (x1, x2) = torch.split(x, [self.f-2,self.f-2], dim=2)
-        x1 = F.relu(self.conv2(x1))
-        x2 = F.relu(self.conv2(x2))
+        x1 = self.conv2(x1)
+        x2 = self.conv2(x2)
+        # x1 = self.batch_norm2(x1)
+        # x2 = self.batch_norm2(x2)
+        x1 = F.relu(x1)
+        x2 = F.relu(x2)
 
         x = torch.cat([x1, x2], dim=2)
         if self.verbose: print("conv2 연산 후:\t",x.shape)
 
         x = x.view(x.shape[0], -1, x.shape[3], x.shape[4])
         x = self.pool2(x)
+        x = self.dropout(x)
         x = x.view(-1, self.dim2, x.shape[2], x.shape[3])
         if self.verbose: print("pool2 연산 후:\t", x.shape)
 
-        x = F.relu(self.conv3(x))
+        x = self.conv3(x)
+        # x = self.batch_norm3(x)
+        x = F.relu(x)
+        x = self.dropout(x)
         if self.verbose: print("conv3 연산 후:\t", x.shape)
 
         x = x.view(-1, 128)

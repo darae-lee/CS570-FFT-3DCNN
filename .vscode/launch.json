@@ -12,8 +12,9 @@
       "console": "integratedTerminal",
       "args": [
         "--dataset_dir",
-        "kth-data-reg",
-        "--add_reg",
+        "kth-data-fft",
+        "--fft", "FFT",
+        // "--add_reg",
         "--lr",
         "1e-3",
         "--optim",

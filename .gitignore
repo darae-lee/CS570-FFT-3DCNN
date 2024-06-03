@@ -7,9 +7,14 @@
 wandb
 */data
 */kth-data
+<<<<<<< HEAD
 */kth-data-reg
 
 logs
 */utdmad-data
 */utdmad
 *.zip
+=======
+*/utdmad-data
+*/utdmad
+>>>>>>> 8cc81a565ed9ff3f29cdd954ef7bf4a6d20fc2f1

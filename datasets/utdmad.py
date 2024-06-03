@@ -76,7 +76,6 @@ def make_utdmad_dataset(directory="utdmad-data-aux", fft=None, cut_param=1.0, ad
             frames = io.read_video(file_path, output_format='TCHW')[0] / 255.0
             frames = transform(frames).split(1, dim=0)
             seg_frames = torch.cat(frames, dim = 0)
-
             N, throw = seg_frames.shape[0] // f, seg_frames.shape[0] % f
             if throw > 0:
                     seg_frames = seg_frames[:-throw]

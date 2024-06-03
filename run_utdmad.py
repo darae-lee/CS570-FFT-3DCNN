@@ -7,6 +7,10 @@ import torch.optim as optim
 import numpy as np
 import wandb
 from torchsummary import summary
+<<<<<<< HEAD
+=======
+from torcheval.metrics.aggregation.auc import AUC
+>>>>>>> 8cc81a565ed9ff3f29cdd954ef7bf4a6d20fc2f1
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 
 
@@ -64,6 +68,7 @@ def main(args):
         else:
             model = Original_Model(mode='KTH', add_reg=args.add_reg).to(device)
 
+<<<<<<< HEAD
 
         if args.fft == "FFT":
             summary(model, input_size = (1, 2*args.frame, args.height, args.width))
@@ -73,6 +78,10 @@ def main(args):
             summary(model, input_size = (1, 5*args.frame-2, args.height, args.width))
 
             
+=======
+        summary(model, input_size = (1, 5*args.frame-2, args.height, args.width))
+
+>>>>>>> 8cc81a565ed9ff3f29cdd954ef7bf4a6d20fc2f1
         if args.optim == 'sgd':
             optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
         elif args.optim == 'adam':
@@ -92,7 +101,10 @@ def main(args):
         start.record()
 
         for epoch in range(args.num_epochs):
+<<<<<<< HEAD
             model.train()
+=======
+>>>>>>> 8cc81a565ed9ff3f29cdd954ef7bf4a6d20fc2f1
             train_loss, train_acc = train(train_loader, model, optimizer, criterion, device)
             
             model.eval()  # Evaluate on the test set
@@ -208,8 +220,11 @@ def test(test_loader, model, criterion, device):
         predicts = predicts+ output_softmax.detach().cpu().tolist()
         labels = labels+ target.detach().cpu().tolist()
     roc_auc = roc_auc_score(labels, predicts, multi_class='ovr', average="macro", labels=[0,1,2,3,4,5])
+<<<<<<< HEAD
         
     test_loss /= len(test_loader.dataset) # average
+=======
+>>>>>>> 8cc81a565ed9ff3f29cdd954ef7bf4a6d20fc2f1
     test_acc /= len(test_loader.dataset) # average
 
     return test_loss, test_acc, roc_auc

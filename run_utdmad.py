@@ -7,7 +7,10 @@ import torch.optim as optim
 import numpy as np
 import wandb
 from torchsummary import summary
+from torcheval.metrics.aggregation.auc import AUC
 from sklearn.metrics import roc_curve, auc, roc_auc_score
+
+
 
 def main(args): 
     print("learning rate: ", args.lr, "\tnum epochs: ", args.num_epochs, 
@@ -20,7 +23,7 @@ def main(args):
         device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
     print(f'{device} is available. \n')
 
-    wandb_table = wandb.Table(columns=["repeat", "time", "loss", "acc", "auc"])
+    wandb_table = wandb.Table(columns=["repeat","time", "loss", "acc", "auc"])
     
     torchvision_transform = transforms.Compose([
         transforms.Resize((args.height, args.width)),
@@ -33,7 +36,7 @@ def main(args):
     for i in range(total_iteration):
         print("=> {}-th iteration".format(i))
         seed = args.seed + i
-        train_set = KTHDataset(args.dataset_dir, 
+        train_set = utdmadDataset(args.dataset_dir, 
                                 fft=args.fft,
                                 cut_param=args.cut_param,
                                 add_reg=args.add_reg, 
@@ -42,7 +45,7 @@ def main(args):
                                 frames = args.frame, 
                                 seed=seed, 
                                 device=device)
-        test_set = KTHDataset(args.dataset_dir, 
+        test_set = utdmadDataset(args.dataset_dir, 
                                 fft=args.fft,
                                 cut_param=args.cut_param,
                                 add_reg=args.add_reg, 
@@ -72,8 +75,8 @@ def main(args):
         criterion = torch.nn.CrossEntropyLoss()
         
         best_acc = 0
-        best_epoch = 0
         best_auc = 0
+        best_epoch = 0
         stop_count = 0
         patience = 50
 
@@ -81,6 +84,7 @@ def main(args):
         end = torch.cuda.Event(enable_timing=True)
 
         start.record()
+
         for epoch in range(args.num_epochs):
             train_loss, train_acc = train(train_loader, model, optimizer, criterion, device)
             
@@ -88,11 +92,11 @@ def main(args):
             with torch.no_grad():
                 test_epoch_loss, test_epoch_acc, test_epoch_auc = test(test_loader, model, criterion, device)
                 
-            print("Epoch {:3d} : Train Loss = {:7f}, Train Acc = {:4f}, Test Loss = {:7f}, Test Acc = {:4f}, Test AUC = {:4f}".format(
+            print("Epoch {:3d} : Train Loss = {:7f}, Train Acc = {:4f}, Test Loss = {:7f}, Test Acc = {:4f}, Test Auc = {:4f}".format(
                 epoch, train_loss, train_acc, test_epoch_loss, test_epoch_acc, test_epoch_auc))
             # log metrics to wandb
             wandb.log({"train loss": train_loss, "train acc.": train_acc, 
-                       "test loss": test_epoch_loss, "test acc.": test_epoch_acc, "best acc.": best_acc, "test auc": test_epoch_auc, "best auc.": best_auc})
+                       "test loss": test_epoch_loss, "test acc.": test_epoch_acc, "test auc": test_epoch_auc, "best acc.": best_acc, "best auc": best_auc})
             
             # Early stopping check
             if test_epoch_acc > best_acc:
@@ -139,7 +143,6 @@ def train(train_loader, model, optimizer, criterion, device):
     train_loss = 0
     train_acc = 0 # best acc
     for (data, aux_data), target in train_loader:
-
         data = data.to(device)
         if args.add_reg :
             aux_data = aux_data.to(device)
@@ -173,9 +176,9 @@ def test(test_loader, model, criterion, device):
     test_loss = 0
     test_acc = 0 # best accuracy
     test_auc = 0
+
     labels = []
     predicts = []
-
     for (data, aux_data), target in test_loader:
         data = data.to(device)
         if args.add_reg :
@@ -195,22 +198,12 @@ def test(test_loader, model, criterion, device):
         test_acc += pred.eq(target.view_as(pred)).sum().item()
         m = nn.Softmax(dim = 1)
         output_softmax = m(output)
-
-#        try: 
-#            roc_auc = roc_auc_score(target.detach().cpu().numpy(), output_softmax.detach().cpu().numpy(), multi_class='ovr', average="macro", labels=[0,1,2,3,4,5])
-#            test_auc += roc_auc
-#            cnt += 1
-#        except ValueError:
-#            pass
-        
         predicts = predicts+ output_softmax.detach().cpu().tolist()
         labels = labels+ target.detach().cpu().tolist()
     roc_auc = roc_auc_score(labels, predicts, multi_class='ovr', average="macro", labels=[0,1,2,3,4,5])
-    
-    
     test_acc /= len(test_loader.dataset) # average
-    test_auc = roc_auc
-    return test_loss, test_acc, test_auc
+
+    return test_loss, test_acc, roc_auc
 
 
 if __name__ == "__main__":
@@ -219,7 +212,7 @@ if __name__ == "__main__":
     parser.add_argument("--add_reg", action="store_true")
     parser.add_argument("--cut_param", type=float, default=1.0)
     parser.add_argument("--dataset_dir", type=str, default="default",
-                        help="directory to dataset under 'datasets' folder. default: 'kth-data-aux' if --add_reg else 'kth-data'.")
+                        help="directory to dataset under 'datasets' folder. default: 'utdmad-data-aux' if --add_reg else 'utdmad-data'.")
     parser.add_argument("--batch_size", type=int, default=32,
                         help="batch size for training (default: 32)")
     parser.add_argument("--num_epochs", type=int, default=30,
@@ -244,11 +237,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.dataset_dir == 'default':
-        args.dataset_dir = 'kth-data-aux' if args.add_reg else 'kth-data'
+        args.dataset_dir = 'utdmad-data-aux' if args.add_reg else 'utdmad-data'
+    
     arch = "3DCNN"
     if args.fft:
         arch = arch + args.fft
-    config = {"architecture": arch, "dataset": "KTH"}
+    config = {"architecture": arch, "dataset": "utdmad"}
     config_name = {'lr': 'learning_rate', 'optim':'optimizer', 'num_epochs':'epochs'}
     for k in args.__dict__:
         if k in config_name.keys():
@@ -261,6 +255,6 @@ if __name__ == "__main__":
         project="CS570", 
         config=config
     )
-    wandb.run.name = f'model-{config["architecture"]}-kth-{args.optim}-lr-{args.lr}-NE-{args.num_epochs}' + ('-reg' if args.add_reg else '')
+    wandb.run.name = f'model-{config["architecture"]}-utdmad-{args.optim}-lr-{args.lr}-NE-{args.num_epochs}' + ('-reg' if args.add_reg else '')
     main(args)
     wandb.finish()

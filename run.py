@@ -62,7 +62,12 @@ def main(args):
         else:
             model = Original_Model(mode='KTH', add_reg=args.add_reg).to(device)
 
-        summary(model, input_size = (1, 5*args.frame-2, args.height, args.width))
+        if args.fft == "FFT":
+            summary(model, input_size = (1, 2*args.frame, args.height, args.width))
+        elif args.fft == "FFT3":
+            summary(model, input_size = (1, 6*args.frame, args.height, args.width))
+        else: 
+            summary(model, input_size = (1, 5*args.frame-2, args.height, args.width))
 
         if args.optim == 'sgd':
             optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
@@ -82,6 +87,7 @@ def main(args):
 
         start.record()
         for epoch in range(args.num_epochs):
+            model.train()
             train_loss, train_acc = train(train_loader, model, optimizer, criterion, device)
             
             model.eval()  # Evaluate on the test set

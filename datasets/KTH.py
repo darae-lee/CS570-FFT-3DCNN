@@ -115,7 +115,7 @@ def make_raw_dataset(directory="kth-data-aux", fft=None, cut_param=1.0, add_reg=
     
 
 def parse_sequence_file():
-    filepath = os.path.join(os.getcwd(), 'datasets/kth-human-motion/00sequences.txt')
+    filepath = os.path.join(os.getcwd(), 'datasets/00sequences.txt')
     print("Parsing ", filepath)
 
     # Read 00sequences.txt file.

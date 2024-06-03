@@ -164,10 +164,11 @@ def train(train_loader, model, optimizer, criterion, device):
         optimizer.step()
         
         # for monitoring
-        train_loss += loss.item() 
+        train_loss += loss.item() * data.size(0)
         pred = output[:, -model.classes:].argmax(dim=1, keepdim=True) # get the index of the max log-probability
         train_acc += pred.eq(target.view_as(pred)).sum().item()
     
+    train_loss /= len(train_loader.dataset)  # average
     train_acc /= len(train_loader.dataset) # average
     return train_loss, train_acc
 
@@ -196,7 +197,7 @@ def test(test_loader, model, criterion, device):
         else:
             regularization = 0
         loss = criterion(output[:, -model.classes:], target) + args.lbda * regularization
-        test_loss += loss.item() # sum up batch loss
+        test_loss += loss.item() * data.size(0) # sum up batch loss
         pred = output[:, -model.classes:].argmax(dim=1, keepdim=True) # get the index of the max log-probability
         test_acc += pred.eq(target.view_as(pred)).sum().item()
         m = nn.Softmax(dim = 1)

@@ -2,7 +2,12 @@
 
 ![](image.png)
 
-1. Download the dataset.
+## 0. Requirements
+
+CUDA version : 11.8
+
+
+## 1. Download the dataset.
 
 ```
 cd datasets
@@ -18,7 +23,7 @@ cd ..
 Make the downloaded file in the folder kth. As ./kth/boxing/person01_boxing_d1_uncomp.avi.
 For the UTD-MHAD dataset, we have to set the data folder as cs570/datasets/utdmad/RGB/a1_s1_t1_color.avi.
 
-2. Run the model
+## 2. Run the model
 
 ```
 python run.py

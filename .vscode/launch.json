@@ -28,6 +28,14 @@
       "program": "${workspaceFolder}/datasets/KTH.py",
       "console": "integratedTerminal",
       "args": ["--directory=kth-data-reg", "--start_from=24"]
-    }
+    },
+    {
+      "name": "Python 디버거: run_utdmad.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_utdmad.py",
+      "console": "integratedTerminal",
+      // "args": ["--directory=kth-data-reg", "--start_from=24"]
+    },
   ]
 }

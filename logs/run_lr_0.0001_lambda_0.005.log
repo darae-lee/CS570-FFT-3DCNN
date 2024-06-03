@@ -1,79 +1,0 @@
-wandb: Currently logged in as: orangingq. Use `wandb login --relogin` to force relogin
-wandb: Tracking run with wandb version 0.17.0
-wandb: Run data is saved locally in /home/shcho/cs570/wandb/run-20240529_033023-923fifvt
-wandb: Run `wandb offline` to turn off syncing.
-wandb: Syncing run rural-sky-146
-wandb: ⭐️ View project at https://wandb.ai/orangingq/CS570
-wandb: 🚀 View run at https://wandb.ai/orangingq/CS570/runs/923fifvt
-learning rate:  0.0001 	num epochs:  30 	regularization:  True 	lambda: 0.005
-
-cuda:0 is available. 
-
-=> 0-th iteration
-train dataset subjects: [20, 3, 0, 8, 7, 24, 4, 23, 2, 13, 22, 14, 1, 17, 11, 21]
-reading data:   0%|          | 0/16 [00:00<?, ?it/s]reading data:   6%|▋         | 1/16 [00:01<00:23,  1.57s/it]reading data:  12%|█▎        | 2/16 [00:02<00:20,  1.46s/it]reading data:  19%|█▉        | 3/16 [00:04<00:18,  1.42s/it]reading data:  25%|██▌       | 4/16 [00:05<00:13,  1.13s/it]reading data:  31%|███▏      | 5/16 [00:05<00:11,  1.00s/it]reading data:  38%|███▊      | 6/16 [00:06<00:09,  1.06it/s]reading data:  44%|████▍     | 7/16 [00:07<00:07,  1.15it/s]reading data:  50%|█████     | 8/16 [00:08<00:06,  1.15it/s]reading data:  56%|█████▋    | 9/16 [00:09<00:06,  1.16it/s]reading data:  62%|██████▎   | 10/16 [00:09<00:05,  1.17it/s]reading data:  69%|██████▉   | 11/16 [00:10<00:04,  1.20it/s]reading data:  75%|███████▌  | 12/16 [00:11<00:03,  1.22it/s]reading data:  81%|████████▏ | 13/16 [00:12<00:02,  1.24it/s]reading data:  88%|████████▊ | 14/16 [00:13<00:01,  1.23it/s]reading data:  94%|█████████▍| 15/16 [00:13<00:00,  1.20it/s]reading data: 100%|██████████| 16/16 [00:14<00:00,  1.24it/s]reading data: 100%|██████████| 16/16 [00:14<00:00,  1.09it/s]
-test dataset subjects: [5, 6, 9, 10, 12, 15, 16, 18, 19]
-reading data:   0%|          | 0/9 [00:00<?, ?it/s]reading data:  11%|█         | 1/9 [00:00<00:06,  1.28it/s]reading data:  22%|██▏       | 2/9 [00:01<00:05,  1.26it/s]reading data:  33%|███▎      | 3/9 [00:02<00:04,  1.29it/s]reading data:  44%|████▍     | 4/9 [00:03<00:03,  1.34it/s]reading data:  56%|█████▌    | 5/9 [00:03<00:02,  1.34it/s]reading data:  67%|██████▋   | 6/9 [00:04<00:02,  1.30it/s]reading data:  78%|███████▊  | 7/9 [00:05<00:01,  1.33it/s]reading data:  89%|████████▉ | 8/9 [00:06<00:00,  1.32it/s]reading data: 100%|██████████| 9/9 [00:06<00:00,  1.33it/s]reading data: 100%|██████████| 9/9 [00:06<00:00,  1.32it/s]
-Epoch   0 : Train Loss = 1228.759517, Train Acc = 0.435070, Test Loss = 625.871201, Test Acc = 0.463244
-Epoch   1 : Train Loss = 945.652196, Train Acc = 0.550237, Test Loss = 589.561369, Test Acc = 0.491949
-Epoch   2 : Train Loss = 847.876819, Train Acc = 0.593545, Test Loss = 589.936689, Test Acc = 0.507585
-Epoch   3 : Train Loss = 787.524064, Train Acc = 0.626075, Test Loss = 547.624104, Test Acc = 0.545391
-Epoch   4 : Train Loss = 736.340677, Train Acc = 0.647825, Test Loss = 534.449364, Test Acc = 0.573046
-Epoch   5 : Train Loss = 691.250491, Train Acc = 0.674836, Test Loss = 565.586091, Test Acc = 0.557526
-Epoch   6 : Train Loss = 657.993974, Train Acc = 0.692352, Test Loss = 554.853352, Test Acc = 0.576779
-Epoch   7 : Train Loss = 626.964039, Train Acc = 0.705248, Test Loss = 552.996781, Test Acc = 0.581564
-Epoch   8 : Train Loss = 599.361978, Train Acc = 0.722058, Test Loss = 538.219762, Test Acc = 0.595216
-Epoch   9 : Train Loss = 575.287043, Train Acc = 0.732645, Test Loss = 576.881120, Test Acc = 0.595799
-Epoch  10 : Train Loss = 548.448719, Train Acc = 0.749070, Test Loss = 604.172409, Test Acc = 0.585064
-Epoch  11 : Train Loss = 534.306823, Train Acc = 0.752855, Test Loss = 560.707614, Test Acc = 0.601050
-Epoch  12 : Train Loss = 514.409483, Train Acc = 0.760747, Test Loss = 571.295540, Test Acc = 0.604667
-Epoch  13 : Train Loss = 496.698359, Train Acc = 0.769537, Test Loss = 619.725366, Test Acc = 0.598366
-Epoch  14 : Train Loss = 477.863476, Train Acc = 0.779161, Test Loss = 621.871638, Test Acc = 0.602917
-Epoch  15 : Train Loss = 465.664881, Train Acc = 0.785064, Test Loss = 626.977336, Test Acc = 0.601400
-Epoch  16 : Train Loss = 453.268475, Train Acc = 0.790517, Test Loss = 594.328956, Test Acc = 0.614236
-Epoch  17 : Train Loss = 441.492028, Train Acc = 0.797831, Test Loss = 647.953927, Test Acc = 0.608168
-Epoch  18 : Train Loss = 428.440019, Train Acc = 0.802772, Test Loss = 622.617905, Test Acc = 0.613886
-Epoch  19 : Train Loss = 417.163620, Train Acc = 0.809380, Test Loss = 664.358032, Test Acc = 0.610968
-Epoch  20 : Train Loss = 410.631086, Train Acc = 0.814577, Test Loss = 626.897500, Test Acc = 0.622054
-Epoch  21 : Train Loss = 394.923622, Train Acc = 0.819133, Test Loss = 660.767239, Test Acc = 0.608285
-Epoch  22 : Train Loss = 389.749202, Train Acc = 0.819902, Test Loss = 648.820224, Test Acc = 0.620303
-Epoch  23 : Train Loss = 380.023109, Train Acc = 0.824586, Test Loss = 695.845717, Test Acc = 0.628471
-Epoch  24 : Train Loss = 373.037652, Train Acc = 0.827345, Test Loss = 687.066292, Test Acc = 0.631739
-Epoch  25 : Train Loss = 365.216139, Train Acc = 0.834339, Test Loss = 814.146235, Test Acc = 0.595216
-Epoch  26 : Train Loss = 357.779790, Train Acc = 0.835622, Test Loss = 728.812467, Test Acc = 0.611669
-Epoch  27 : Train Loss = 351.955056, Train Acc = 0.839471, Test Loss = 781.831751, Test Acc = 0.616336
-Epoch  28 : Train Loss = 345.006059, Train Acc = 0.842615, Test Loss = 810.656967, Test Acc = 0.616686
-wandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.009 MB uploadedwandb: | 0.009 MB of 0.009 MB uploadedwandb: / 0.009 MB of 0.009 MB uploadedwandb: - 0.009 MB of 0.009 MB uploadedwandb: \ 0.009 MB of 0.021 MB uploadedwandb: | 0.009 MB of 0.021 MB uploadedwandb: / 0.021 MB of 0.021 MB uploadedwandb: - 0.021 MB of 0.021 MB uploadedwandb: \ 0.021 MB of 0.021 MB uploadedwandb:                                                                                
-wandb: 
-wandb: Run history:
-wandb:  avg test acc ▁
-wandb: avg test loss ▁
-wandb:     best acc. ▁▆▆▇▇▇▇▇▇█████████████████████
-wandb:     test acc. ▁▂▃▄▆▅▆▆▆▇▆▇▇▇▇▇▇▇▇▇█▇███▆▇▇▇▇
-wandb:     test loss ▃▂▂▁▁▂▂▁▁▂▃▂▂▃▃▃▂▄▃▄▃▄▄▅▅█▆▇██
-wandb:    train acc. ▁▃▄▄▅▅▅▆▆▆▆▆▇▇▇▇▇▇▇▇██████████
-wandb:    train loss █▆▅▅▄▄▃▃▃▃▃▃▂▂▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁
-wandb: 
-wandb: Run summary:
-wandb:  avg test acc 0.61249
-wandb: avg test loss 811.80871
-wandb:     best acc. 0.63174
-wandb:     test acc. 0.61249
-wandb:     test loss 811.80871
-wandb:    train acc. 0.83889
-wandb:    train loss 342.21727
-wandb: 
-wandb: 🚀 View run rural-sky-146 at: https://wandb.ai/orangingq/CS570/runs/923fifvt
-wandb: ⭐️ View project at: https://wandb.ai/orangingq/CS570
-wandb: Synced 6 W&B file(s), 1 media file(s), 1 artifact file(s) and 0 other file(s)
-wandb: Find logs at: ./wandb/run-20240529_033023-923fifvt/logs
-wandb: WARNING Step only supports monotonically increasing values, use define_metric to set a custom x axis. For details see: https://wandb.me/define-metric
-wandb: WARNING (User provided step: 0 is less than current step: 30. Dropping entry: {'test loss': 811.8087119488046, 'test acc.': 0.6124854142357059, '_timestamp': 1716921596.9918518}).
-Epoch  29 : Train Loss = 342.217270, Train Acc = 0.838894, Test Loss = 811.808712, Test Acc = 0.612485
-Early stopping at epoch 29
-0-th Test set: Loss = 811.8087119, Acc = 0.6125
-
-
-Final Test Result: 
-Loss = 811.8087119, Acc = 0.6125 (61.2%)
-

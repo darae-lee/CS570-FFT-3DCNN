@@ -58,7 +58,7 @@ python run_utdmad.py --fft FFT --cut_param [cutting ratio] \
 
 ### FFT3 model
 
-with 3 channels: Gray frames, amplitude frames, phase frames
+with 3 channels: x-y phase, x-t phase, and y-t phase frames
 
 You can choose <code>cut_param</code> from 0.7, 0.8, and 1.0(no cutting).
 

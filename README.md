@@ -26,10 +26,32 @@ For the UTD-MHAD dataset, we have to set the data folder as cs570/datasets/utdma
 
 ## 2. Run the model
 
+Baseline model (with 5 channels: Gray frames, grad-x frames, grad-y frames, opt-x frames, opt-y frames)
+
 ```
-python run.py
-python run_utdmad.py --dataset_dir=utdmad-data-aux
+python run.py --lr [learning rate] --num_epochs [number of epochs]
+python run_utdmad.py --lr [learning rate] --num_epochs [number of epochs]
 ```
+
+FFT model (with 2 channels: Amplitude frames, phase frames)
+You can choose <code>cut_param</code> from 0.7, 0.8, and 1.0(no cutting).
+
+```
+python run.py --fft FFT --cut_param [cutting ratio] --dataset_dir [dataset directory] --lr [learning rate] --num_epochs [number of epochs] 
+python run_utdmad.py --fft FFT --cut_param [cutting ratio] --dataset_dir [dataset directory] --lr [learning rate] --num_epochs [number of epochs] 
+```
+
+FFT3 model (with 3 channels: Gray frames, amplitude frames, phase frames)
+You can choose <code>cut_param</code> from 0.7, 0.8, and 1.0(no cutting).
+
+```
+python run.py --fft FFT3 --cut_param [cutting ratio] --dataset_dir [dataset directory] --lr [learning rate] --num_epochs [number of epochs] 
+python run_utdmad.py --fft FFT3 --cut_param [cutting ratio] --dataset_dir [dataset directory] --lr [learning rate] --num_epochs [number of epochs] 
+```
+
+
+
+
 
 ### KTH Dataset
 

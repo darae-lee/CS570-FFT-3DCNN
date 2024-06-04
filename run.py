@@ -8,6 +8,7 @@ import numpy as np
 import wandb
 from torchsummary import summary
 from sklearn.metrics import roc_curve, auc, roc_auc_score
+import random
 
 def main(args): 
     print("learning rate: ", args.lr, "\tnum epochs: ", args.num_epochs, 
@@ -33,6 +34,7 @@ def main(args):
     for i in range(total_iteration):
         print("=> {}-th iteration".format(i))
         seed = args.seed + i
+        random.seed(seed)
         train_set = KTHDataset(args.dataset_dir, 
                                 fft=args.fft,
                                 cut_param=args.cut_param,
@@ -65,7 +67,7 @@ def main(args):
         if args.fft == "FFT":
             summary(model, input_size = (1, 2*args.frame, args.height, args.width))
         elif args.fft == "FFT3":
-            summary(model, input_size = (1, 6*args.frame, args.height, args.width))
+            summary(model, input_size = (1, 3*args.frame, args.height, args.width))
         else: 
             summary(model, input_size = (1, 5*args.frame-2, args.height, args.width))
 
@@ -258,9 +260,9 @@ if __name__ == "__main__":
 
     wandb.init(  # TODO
         # set the wandb project where this run will be logged
-        project="CS570", 
+        project="CS570-final", 
         config=config
     )
-    wandb.run.name = f'model-{config["architecture"]}-kth-{args.optim}-lr-{args.lr}-NE-{args.num_epochs}' + ('-reg' if args.add_reg else '')
+    wandb.run.name = f'model-{config["architecture"]}-kth-{args.optim}-lr-{args.lr}-NE-{args.num_epochs}-{args.cut_param}' + ('-reg' if args.add_reg else '')
     main(args)
     wandb.finish()

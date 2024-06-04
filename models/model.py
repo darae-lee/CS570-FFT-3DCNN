@@ -147,14 +147,14 @@ def hardwire_layer_for_FFT(input, device, verbose=False, cut_param=1.0):
     if verbose: print("After hardwired layer :\t", hardwired.shape)
     return hardwired
 
-def hardwire_layer_for_FFT3(input, device, verbose=False, cut_param=0.5):
+def hardwire_layer_for_FFT3(input, device, verbose=False, cut_param=1.0):
     """
-    Proprocess the given consecutive input (grayscaled) frames into 2 different styles. 
+    Proprocess the given consecutive input (grayscaled) frames into 3 different styles. 
     input : array of shape (N, frames, height, width)
     ex) TRECVID dataset : (N, 7, 60, 40),  KTH dataset : (N, 9, 80, 60)
     
     ##################################### FFT frames #####################################
-    # content: [[[FFT_Amplitude frames], [FFT_Phase frames]], ...] with gray image frames
+    # content: [[x-y phase], [x-t phase], [y-t phase frames]]
     # shape:   [[[---- f ----], [----- f -----]], ...]
     #           => total: 3f frames
     ############################################################################################

@@ -97,7 +97,9 @@ def make_utdmad_dataset(directory="utdmad-data-aux", fft=None, cut_param=1.0, ad
             if add_reg:
                 input_aux = auxiliary_feature(gray_img, verbose=True)
 
-
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+            
         # save the data per each subject
         person_path = os.path.join(dir_path, str(subject_id))
         

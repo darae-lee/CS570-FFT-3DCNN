@@ -137,7 +137,6 @@ class utdmadDataset(Dataset):
         print(self.type, "dataset subjects:", self.subjects)
         
         self.dataset, self.auxdata, self.labels = self.read_dataset()
-        print(self.labels)
         
         
     def __len__(self):

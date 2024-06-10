@@ -30,7 +30,7 @@ pip install -r requirements.txt
 ```
 
 
-## 1. Download the dataset.
+## 1. Download the dataset
 
 ```
 cd datasets

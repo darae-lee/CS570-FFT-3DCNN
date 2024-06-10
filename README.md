@@ -1,4 +1,20 @@
 # CS570
+This project reproduces the paper "3D Convolutional Neural Networks for Human Action Recognition" (2012),
+and improves the performance using FFT (Fast Fourier Transform).
+
+## Paper
+link : https://ieeexplore.ieee.org/document/6165309
+
+@article{ji20123d,
+  title={3D convolutional neural networks for human action recognition},
+  author={Ji, Shuiwang and Xu, Wei and Yang, Ming and Yu, Kai},
+  journal={IEEE transactions on pattern analysis and machine intelligence},
+  volume={35},
+  number={1},
+  pages={221--231},
+  year={2012},
+  publisher={IEEE}
+}
 
 ![](image.png)
 

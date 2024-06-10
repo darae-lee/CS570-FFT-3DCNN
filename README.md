@@ -1,6 +1,7 @@
 # CS570
-This project reproduces the paper "3D Convolutional Neural Networks for Human Action Recognition" (2012),
-and improves the performance using FFT (Fast Fourier Transform).
+This project reproduces the paper **"3D Convolutional Neural Networks for Human Action Recognition" (2012)**,
+
+and improves the performance and light-weightens the model through FFT (Fast Fourier Transform).
 
 ## Paper
 link : https://ieeexplore.ieee.org/document/6165309
